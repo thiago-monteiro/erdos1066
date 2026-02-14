@@ -325,9 +325,132 @@ lemma L2_local_periodic (n p : Nat) (_hp : Nat.Prime p) :
   Np n p <= L n + 1 := by
   exact le_trans (Np_le_cardK n p) (card_K_le n)
 
+/-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
+lemma zero_not_mem_A_of_mod4 {n : Nat}
+    (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
+  classical
+  intro h0
+  have hsmall :
+      forall p : Nat, Nat.Prime p -> p <= z n -> Not ((M n 0) % (p ^ 2) = 0) :=
+    (Finset.mem_filter.mp h0).2
+  have hnot : Not ((M n 0) % (2 ^ 2) = 0) := hsmall 2 (by decide) hz2
+  have hmod0 : (M n 0) % (2 ^ 2) = 0 := by
+    unfold M
+    have hsub : (n - 1) % 4 = 0 := by omega
+    simpa [pow_two] using hsub
+  exact hnot hmod0
+
+/-- If `n ≡ 2 [MOD 9]` and `3 ≤ z n`, then `k = 1` is excluded from `A n (z n)`. -/
+lemma one_not_mem_A_of_mod9 {n : Nat}
+    (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) : 1 ∉ A n (z n) := by
+  classical
+  intro h1
+  have hsmall :
+      forall p : Nat, Nat.Prime p -> p <= z n -> Not ((M n 1) % (p ^ 2) = 0) :=
+    (Finset.mem_filter.mp h1).2
+  have hnot : Not ((M n 1) % (3 ^ 2) = 0) := hsmall 3 (by decide) hz3
+  have hmod0 : (M n 1) % (3 ^ 2) = 0 := by
+    unfold M
+    have hsub : (n - 2) % 9 = 0 := by omega
+    simpa [pow_two] using hsub
+  exact hnot hmod0
+
+lemma card_A_le_card_K_sub_two {n z0 : Nat}
+    (h0K : 0 ∈ K n) (h1K : 1 ∈ K n)
+    (h0A : 0 ∉ A n z0) (h1A : 1 ∉ A n z0) :
+    (A n z0).card <= (K n).card - 2 := by
+  classical
+  have hsubsetErase : A n z0 ⊆ ((K n).erase 0).erase 1 := by
+    intro k hkA
+    have hkK : k ∈ K n := A_subset_K n z0 hkA
+    refine Finset.mem_erase.mpr ?_
+    refine ⟨?_, ?_⟩
+    · intro hk1
+      exact h1A (hk1 ▸ hkA)
+    · refine Finset.mem_erase.mpr ?_
+      refine ⟨?_, hkK⟩
+      intro hk0
+      exact h0A (hk0 ▸ hkA)
+  have hcardErase : (((K n).erase 0).erase 1).card = (K n).card - 2 := by
+    have h1Erase : 1 ∈ (K n).erase 0 := Finset.mem_erase.mpr ⟨by decide, h1K⟩
+    calc
+      (((K n).erase 0).erase 1).card = ((K n).erase 0).card - 1 := Finset.card_erase_of_mem h1Erase
+      _ = (K n).card - 1 - 1 := by rw [Finset.card_erase_of_mem h0K]
+      _ = (K n).card - 2 := by omega
+  calc
+    (A n z0).card <= (((K n).erase 0).erase 1).card := Finset.card_le_card hsubsetErase
+    _ = (K n).card - 2 := hcardErase
+
+lemma S1_fails_on_progression (t : Nat) :
+    ¬ L (65 + 36 * t) <= (A (65 + 36 * t) (z (65 + 36 * t))).card := by
+  let n := 65 + 36 * t
+  have hn65 : 65 <= n := by
+    dsimp [n]
+    omega
+  have hmod4 : n % 4 = 1 := by
+    dsimp [n]
+    omega
+  have hmod9 : n % 9 = 2 := by
+    dsimp [n]
+    omega
+  have hn0 : n ≠ 0 := by omega
+  have hL6 : 6 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    norm_num
+    omega
+  have hz3 : 3 <= z n := by
+    unfold z
+    omega
+  have hz2 : 2 <= z n := by omega
+  have h0A : 0 ∉ A n (z n) := zero_not_mem_A_of_mod4 hz2 hmod4
+  have h1A : 1 ∉ A n (z n) := one_not_mem_A_of_mod9 hz3 hmod9
+  have h0K : 0 ∈ K n := by
+    unfold K candidateExponents
+    refine Finset.mem_filter.mpr ?_
+    refine ⟨Finset.mem_range.mpr (Nat.succ_pos _), ?_⟩
+    change 1 < n
+    omega
+  have h1K : 1 ∈ K n := by
+    unfold K candidateExponents
+    refine Finset.mem_filter.mpr ?_
+    refine ⟨Finset.mem_range.mpr ?_, ?_⟩
+    · unfold L at hL6
+      omega
+    · change 2 < n
+      omega
+  have hA_le_Km2 : (A n (z n)).card <= (K n).card - 2 :=
+    card_A_le_card_K_sub_two h0K h1K h0A h1A
+  have hA_le_Lm1 : (A n (z n)).card <= L n - 1 := by
+    have hK : (K n).card <= L n + 1 := card_K_le n
+    have htmp : (A n (z n)).card <= (L n + 1) - 2 := by
+      exact le_trans hA_le_Km2 (Nat.sub_le_sub_right hK 2)
+    have hcalc : (L n + 1) - 2 = L n - 1 := by omega
+    simpa [hcalc] using htmp
+  intro hS1n
+  have : L n <= L n - 1 := le_trans hS1n hA_le_Lm1
+  omega
+
 /-- S1: small-prime sieve lower bound (analytic input). -/
 def S1_small_prime_sieve : Prop :=
   exists N1 : Nat, forall n : Nat, N1 <= n -> Odd n -> L n <= (A n (z n)).card
+
+theorem not_S1_small_prime_sieve : ¬ S1_small_prime_sieve := by
+  intro hS1
+  rcases hS1 with ⟨N1, hN1⟩
+  let n := 65 + 36 * N1
+  have hnN : N1 <= n := by
+    dsimp [n]
+    omega
+  have hodd : Odd n := by
+    dsimp [n]
+    refine ⟨32 + 18 * N1, ?_⟩
+    omega
+  have hbound : L n <= (A n (z n)).card := hN1 n hnN hodd
+  have hfail : ¬ L n <= (A n (z n)).card := by
+    dsimp [n]
+    simpa using (S1_fails_on_progression N1)
+  exact hfail hbound
 
 /--
 Sufficient condition for `S1_small_prime_sieve`:
