@@ -295,6 +295,11 @@ lemma C5 {n k : Nat} (hk : 2 ^ k < n) (hsq : Squarefree (M n k)) :
     Represents n := by
   exact represents_of_exponent hk hsq
 
+/-- Prime support used in small-prime counting. -/
+noncomputable def smallPrimeSupport (n : Nat) : Finset Nat := by
+  classical
+  exact (Finset.Icc 2 (z n)).filter Nat.Prime
+
 /-- Prime support used in large-prime counting. -/
 noncomputable def largePrimeSupport (n : Nat) : Finset Nat := by
   classical
@@ -331,6 +336,47 @@ eventually, the small-prime bad set has cardinality at most `|K n| - L n`.
 def S1_small_prime_bad_bound_eventually : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     (smallPrimeBad n (z n)).card <= (K n).card - L n
+
+/-- S1 decomposition: small-prime bad set is covered by local prime classes. -/
+theorem S1_small_prime_decomp (n : Nat) :
+  (smallPrimeBad n (z n)).card <= Finset.sum (smallPrimeSupport n) (fun p => Np n p) := by
+  classical
+  let badAt : Nat -> Finset Nat := fun p => (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
+  have hsubset :
+      smallPrimeBad n (z n) ⊆ (smallPrimeSupport n).biUnion badAt := by
+    intro k hkB
+    have hkK : k ∈ K n := (Finset.mem_filter.mp hkB).1
+    rcases (Finset.mem_filter.mp hkB).2 with ⟨p, hp, hpz, hmod0⟩
+    have hpIcc : p ∈ Finset.Icc 2 (z n) := Finset.mem_Icc.mpr ⟨hp.two_le, hpz⟩
+    have hpSupport : p ∈ smallPrimeSupport n := by
+      unfold smallPrimeSupport
+      exact Finset.mem_filter.mpr ⟨hpIcc, hp⟩
+    have hkBadAt : k ∈ badAt p := Finset.mem_filter.mpr ⟨hkK, hmod0⟩
+    exact Finset.mem_biUnion.mpr ⟨p, hpSupport, hkBadAt⟩
+  calc
+    (smallPrimeBad n (z n)).card <= ((smallPrimeSupport n).biUnion badAt).card :=
+      Finset.card_le_card hsubset
+    _ <= Finset.sum (smallPrimeSupport n) (fun p => (badAt p).card) := Finset.card_biUnion_le
+    _ = Finset.sum (smallPrimeSupport n) (fun p => Np n p) := by
+      simp [Np, badAt]
+
+/--
+Sufficient condition for `S1_small_prime_sieve`:
+eventually, the small-prime local-count sum is bounded by `|K n| - L n`.
+-/
+def S1_small_prime_sum_bound_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    Finset.sum (smallPrimeSupport n) (fun p => Np n p) <= (K n).card - L n
+
+/--
+Sufficient condition for `S1_small_prime_sieve`:
+eventually, local counts are uniformly bounded by a constant `C`,
+and support size times `C` is bounded by `|K n| - L n`.
+-/
+def S1_uniform_local_bound_eventually (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (forall p : Nat, p ∈ smallPrimeSupport n -> Np n p <= C) /\
+    (smallPrimeSupport n).card * C <= (K n).card - L n
 
 /-- G1: decompose large-prime contribution via local counts. -/
 theorem G1_large_prime_decomp (n : Nat) :
@@ -465,6 +511,32 @@ theorem S1_of_small_prime_bad_bound_eventually (hBad : S1_small_prime_bad_bound_
       symm
       exact card_A_eq_card_K_sub_smallPrimeBad n (z n)
 
+theorem S1_of_small_prime_sum_bound_eventually (hSum : S1_small_prime_sum_bound_eventually) :
+    S1_small_prime_sieve := by
+  apply S1_of_small_prime_bad_bound_eventually
+  rcases hSum with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact le_trans (S1_small_prime_decomp n) (hN n hn hodd)
+
+theorem S1_of_uniform_local_bound_eventually {C : Nat}
+    (hUni : S1_uniform_local_bound_eventually C) : S1_small_prime_sieve := by
+  apply S1_of_small_prime_sum_bound_eventually
+  rcases hUni with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  rcases hN n hn hodd with ⟨hpoint, hmul⟩
+  have hsum :
+      Finset.sum (smallPrimeSupport n) (fun p => Np n p) <=
+        (smallPrimeSupport n).card * C := by
+    calc
+      Finset.sum (smallPrimeSupport n) (fun p => Np n p) <=
+          Finset.sum (smallPrimeSupport n) (fun _ => C) := by
+            exact Finset.sum_le_sum (by intro p hp; exact hpoint p hp)
+      _ = (smallPrimeSupport n).card * C := by
+            simp
+  exact le_trans hsum hmul
+
 /--
 Sufficient condition for `S1_small_prime_sieve`:
 eventually, the small-prime-clean set `A` coincides with the whole exponent window `K`.
@@ -530,6 +602,20 @@ theorem T0_erdos11_from_graph_assumptions
   intro n hn hodd
   rcases hN n hn hodd with ⟨k, hkK, hsq⟩
   exact C5 (C1 hkK) hsq
+
+theorem T0_erdos11_from_sum_bounds
+    (hS1 : S1_small_prime_sum_bound_eventually) (hG3 : G3_sum_bound_eventually) :
+    Erdos11Conjecture := by
+  exact T0_erdos11_from_graph_assumptions
+    (S1_of_small_prime_sum_bound_eventually hS1)
+    (G3_of_sum_bound_eventually hG3)
+
+theorem T0_erdos11_from_uniform_local_bounds {Csmall Clarge : Nat}
+    (hS1 : S1_uniform_local_bound_eventually Csmall)
+    (hG3 : G3_uniform_local_bound_eventually Clarge) : Erdos11Conjecture := by
+  exact T0_erdos11_from_graph_assumptions
+    (S1_of_uniform_local_bound_eventually hS1)
+    (G3_of_uniform_local_bound_eventually hG3)
 
 end AsymptoticGraph
 
