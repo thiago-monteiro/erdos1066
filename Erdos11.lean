@@ -1,1 +1,438 @@
-import Erdos11.Basic
+/-
+Copyright (c) 2024 Erdos11 Project. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erdos11 Project
+-/
+import Mathlib
+
+namespace Erdos11
+
+/--
+`Represents n` means `n` is the sum of a positive squarefree number and a power of `2`.
+-/
+def Represents (n : Nat) : Prop :=
+  ∃ m k : Nat, m > 0 ∧ Squarefree m ∧ n = m + 2 ^ k
+
+/--
+Formal statement of the Erdős #11 conjecture:
+all sufficiently large odd numbers satisfy `Represents`.
+-/
+def Erdos11Conjecture : Prop :=
+  ∃ N : Nat, ∀ n : Nat, N ≤ n → Odd n → Represents n
+
+/-- Candidate exponents bounded by `log_2 n` and satisfying `2^k < n`. -/
+def candidateExponents (n : Nat) : Finset Nat :=
+  (Finset.range (Nat.log 2 n + 1)).filter (fun k => 2 ^ k < n)
+
+/--
+Boolean predicate for a good exponent:
+`2^k < n` and `n - 2^k` is squarefree.
+-/
+def goodExponent (n k : Nat) : Bool :=
+  decide (2 ^ k < n ∧ Squarefree (n - 2 ^ k))
+
+/--
+Linear search up to a bound `b`.
+Returns the first exponent that satisfies `goodExponent`.
+-/
+def searchExponent (n : Nat) : Nat → Option Nat
+  | 0 => if goodExponent n 0 then some 0 else none
+  | b + 1 =>
+      match searchExponent n b with
+      | some k => some k
+      | none => if goodExponent n (b + 1) then some (b + 1) else none
+
+/-- Main executable exponent finder, searched up to `Nat.log 2 n`. -/
+def findExponent? (n : Nat) : Option Nat :=
+  searchExponent n (Nat.log 2 n)
+
+lemma searchExponent_sound {n b k} (h : searchExponent n b = some k) :
+    2 ^ k < n ∧ Squarefree (n - 2 ^ k) := by
+  induction b generalizing k with
+  | zero =>
+      simp [searchExponent, goodExponent] at h
+      rcases h with ⟨hgood, hk⟩
+      subst hk
+      simpa using hgood
+  | succ b ih =>
+      dsimp [searchExponent] at h
+      cases hs : searchExponent n b with
+      | none =>
+          simp [hs, goodExponent] at h
+          rcases h with ⟨hgood, hk⟩
+          subst hk
+          simpa using hgood
+      | some k' =>
+          simp [hs] at h
+          subst h
+          exact ih hs
+
+lemma findExponent_sound {n k} (h : findExponent? n = some k) :
+    2 ^ k < n ∧ Squarefree (n - 2 ^ k) := by
+  exact searchExponent_sound (b := Nat.log 2 n) h
+
+lemma represents_of_exponent {n k : Nat} (hk : 2 ^ k < n) (hsq : Squarefree (n - 2 ^ k)) :
+    Represents n := by
+  refine ⟨n - 2 ^ k, k, Nat.sub_pos_of_lt hk, hsq, ?_⟩
+  exact (Nat.sub_add_cancel (le_of_lt hk)).symm
+
+lemma represents_of_findExponent_isSome {n : Nat} (h : (findExponent? n).isSome = true) :
+    Represents n := by
+  have hs : (findExponent? n).isSome := by simpa using h
+  rcases Option.isSome_iff_exists.mp hs with ⟨k, hk⟩
+  have hgood := findExponent_sound hk
+  exact represents_of_exponent hgood.1 hgood.2
+
+/--
+Certified solver returning `(m, k)` when successful, with
+`m = n - 2^k`.
+-/
+def solver? (n : Nat) : Option (Nat × Nat) :=
+  (findExponent? n).map (fun k => (n - 2 ^ k, k))
+
+lemma solver_sound {n m k : Nat} (h : solver? n = some (m, k)) :
+    m > 0 ∧ Squarefree m ∧ n = m + 2 ^ k := by
+  unfold solver? at h
+  cases hfind : findExponent? n with
+  | none =>
+      simp [hfind] at h
+  | some k0 =>
+      simp [hfind] at h
+      rcases h with ⟨hm, hk⟩
+      subst hm hk
+      have hgood := findExponent_sound hfind
+      exact ⟨Nat.sub_pos_of_lt hgood.1, hgood.2,
+        (Nat.sub_add_cancel (le_of_lt hgood.1)).symm⟩
+
+theorem represents_of_solver_eq_some {n m k : Nat} (h : solver? n = some (m, k)) :
+    Represents n := by
+  rcases solver_sound h with ⟨hm, hsq, hsum⟩
+  exact ⟨m, k, hm, hsq, hsum⟩
+
+/-- Odd candidates in `[3, B]`, as an executable list. -/
+def oddCandidates (B : Nat) : List Nat :=
+  (List.range (B + 1)).filter (fun n => decide (3 <= n ∧ Odd n))
+
+/--
+Computable finite check:
+every odd candidate up to `B` has a successful exponent search.
+-/
+def solverSucceedsUpTo (B : Nat) : Bool :=
+  (oddCandidates B).all fun n => (findExponent? n).isSome
+
+/-- Mathematical finite verification statement up to bound `B`. -/
+def VerifiedUpTo (B : Nat) : Prop :=
+  ∀ n, 3 <= n -> n <= B -> Odd n -> Represents n
+
+lemma solverSucceedsUpTo_spec {B : Nat} (h : solverSucceedsUpTo B = true) :
+    ∀ n, n ∈ oddCandidates B → (findExponent? n).isSome = true := by
+  unfold solverSucceedsUpTo at h
+  simpa using h
+
+lemma mem_oddCandidates_of_bounds {B n : Nat}
+    (h3 : 3 <= n) (hB : n <= B) (hodd : Odd n) :
+    n ∈ oddCandidates B := by
+  unfold oddCandidates
+  refine List.mem_filter.mpr ?_
+  refine ⟨List.mem_range.mpr (Nat.lt_succ_of_le hB), ?_⟩
+  have hprop : 3 <= n ∧ Odd n := ⟨h3, hodd⟩
+  simpa [Bool.decide_eq_true] using hprop
+
+theorem verifiedUpTo_of_solverSucceedsUpTo (B : Nat) (h : solverSucceedsUpTo B = true) :
+    VerifiedUpTo B := by
+  intro n h3 hB hodd
+  exact represents_of_findExponent_isSome
+    (solverSucceedsUpTo_spec h n (mem_oddCandidates_of_bounds h3 hB hodd))
+
+/--
+Executable finite verification result:
+the solver is certified for every odd `n` with `3 <= n <= 2^20`.
+-/
+theorem solverSucceedsUpTo_2pow20 : solverSucceedsUpTo (2 ^ 20) = true := by
+  native_decide
+
+/--
+Formal finite theorem:
+for every odd `n` with `3 <= n <= 2^20`, `Represents n` holds.
+-/
+theorem verifiedUpTo_2pow20 : VerifiedUpTo (2 ^ 20) :=
+  verifiedUpTo_of_solverSucceedsUpTo (2 ^ 20) solverSucceedsUpTo_2pow20
+
+namespace AsymptoticGraph
+
+/-- D1: logarithmic scale parameter. -/
+def L (n : Nat) : Nat := Nat.log 2 n
+
+/-- D2: exponent window. -/
+def K (n : Nat) : Finset Nat := candidateExponents n
+
+/-- D3: translated value `n - 2^k`. -/
+def M (n k : Nat) : Nat := n - 2 ^ k
+
+/-- D4: clean set after removing small prime-square divisibility. -/
+noncomputable def A (n z : Nat) : Finset Nat := by
+  classical
+  exact (K n).filter (fun k =>
+    forall p : Nat, Nat.Prime p -> p <= z -> Not ((M n k) % (p ^ 2) = 0))
+
+/-- D5: bad set created by large prime-square divisibility. -/
+noncomputable def B (n z : Nat) : Finset Nat := by
+  classical
+  exact (K n).filter (fun k =>
+    exists p : Nat, Nat.Prime p /\ z < p /\ (M n k) % (p ^ 2) = 0)
+
+/-- L1: local counting function for a fixed prime `p`. -/
+def Np (n p : Nat) : Nat :=
+  ((K n).filter (fun k => (M n k) % (p ^ 2) = 0)).card
+
+/-- Cutoff used in the split between small and large primes. -/
+def z (n : Nat) : Nat := L n / 2
+
+lemma A_subset_K (n z0 : Nat) : A n z0 ⊆ K n := by
+  classical
+  intro k hk
+  exact (Finset.mem_filter.mp hk).1
+
+lemma B_subset_K (n z0 : Nat) : B n z0 ⊆ K n := by
+  classical
+  intro k hk
+  exact (Finset.mem_filter.mp hk).1
+
+lemma card_A_le_card_K (n z0 : Nat) : (A n z0).card <= (K n).card :=
+  Finset.card_le_card (A_subset_K n z0)
+
+lemma card_B_le_card_K (n z0 : Nat) : (B n z0).card <= (K n).card :=
+  Finset.card_le_card (B_subset_K n z0)
+
+/-- C1: membership in `K n` gives `2^k < n`. -/
+lemma C1 {n k : Nat} (hk : k ∈ K n) : 2 ^ k < n := by
+  exact (Finset.mem_filter.mp hk).2
+
+/-- C2: outside both bad mechanisms implies squarefree. -/
+lemma C2 {n z k : Nat} (hkA : k ∈ A n z) (hkB : k ∉ B n z) :
+    Squarefree (M n k) := by
+  classical
+  rw [Nat.squarefree_iff_prime_squarefree]
+  intro p hp hpp
+  have hkK : k ∈ K n := (Finset.mem_filter.mp hkA).1
+  have hsmall :
+      forall q : Nat, Nat.Prime q -> q <= z -> Not ((M n k) % (q ^ 2) = 0) :=
+    (Finset.mem_filter.mp hkA).2
+  have hmod0 : (M n k) % (p ^ 2) = 0 := Nat.mod_eq_zero_of_dvd (by
+    simpa [pow_two] using hpp)
+  by_cases hple : p <= z
+  · exact hsmall p hp hple hmod0
+  · have hpgt : z < p := lt_of_not_ge hple
+    have hmemB : k ∈ B n z := by
+      unfold B
+      classical
+      exact Finset.mem_filter.mpr
+        ⟨hkK, ⟨p, hp, hpgt, hmod0⟩⟩
+    exact hkB hmemB
+
+/-- C3: basic cardinal inequality for survivors. -/
+lemma C3 (n z : Nat) :
+  (A n z).card - (B n z).card <= (A n z \ B n z).card := by
+  simpa using (Finset.le_card_sdiff (B n z) (A n z))
+
+/-- C4: positive net count gives a squarefree witness. -/
+lemma C4 {n z : Nat} (hpos : (A n z).card - (B n z).card > 0) :
+    exists k : Nat, k ∈ K n /\ Squarefree (M n k) := by
+  classical
+  have hsurv : 0 < (A n z \ B n z).card := lt_of_lt_of_le hpos (C3 n z)
+  rcases Finset.card_pos.mp hsurv with ⟨k, hk⟩
+  have hkA : k ∈ A n z := (Finset.mem_sdiff.mp hk).1
+  have hkNotB : k ∉ B n z := (Finset.mem_sdiff.mp hk).2
+  have hkK : k ∈ K n := (Finset.mem_filter.mp hkA).1
+  exact ⟨k, hkK, C2 hkA hkNotB⟩
+
+/-- C5: convert exponent witness into `Represents`. -/
+lemma C5 {n k : Nat} (hk : 2 ^ k < n) (hsq : Squarefree (M n k)) :
+    Represents n := by
+  exact represents_of_exponent hk hsq
+
+/-- Prime support used in large-prime counting. -/
+noncomputable def largePrimeSupport (n : Nat) : Finset Nat := by
+  classical
+  exact (Finset.Icc (z n + 1) n).filter Nat.Prime
+
+/-- Size bound for the exponent window. -/
+lemma card_K_le (n : Nat) : (K n).card <= L n + 1 := by
+  unfold K L candidateExponents
+  simpa using (Finset.card_filter_le (s := Finset.range (Nat.log 2 n + 1))
+    (p := fun k => 2 ^ k < n))
+
+/-- Trivial local counting bound by cardinality of the search window. -/
+lemma Np_le_cardK (n p : Nat) : Np n p <= (K n).card := by
+  unfold Np
+  simpa using (Finset.card_filter_le (s := K n)
+    (p := fun k => (M n k) % (p ^ 2) = 0))
+
+/--
+L2 (coarse form): local count is bounded by the window size.
+The sharper periodic/order bound is a future strengthening.
+-/
+lemma L2_local_periodic (n p : Nat) (_hp : Nat.Prime p) :
+  Np n p <= L n + 1 := by
+  exact le_trans (Np_le_cardK n p) (card_K_le n)
+
+/-- S1: small-prime sieve lower bound (analytic input). -/
+def S1_small_prime_sieve : Prop :=
+  exists N1 : Nat, forall n : Nat, N1 <= n -> Odd n -> L n <= (A n (z n)).card
+
+/-- G1: decompose large-prime contribution via local counts. -/
+theorem G1_large_prime_decomp (n : Nat) :
+  (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
+  classical
+  let badAt : Nat -> Finset Nat := fun p => (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
+  have hsubset :
+      B n (z n) ⊆ (largePrimeSupport n).biUnion badAt := by
+    intro k hkB
+    have hkK : k ∈ K n := (Finset.mem_filter.mp hkB).1
+    rcases (Finset.mem_filter.mp hkB).2 with ⟨p, hp, hpgt, hmod0⟩
+    have hklt : 2 ^ k < n := C1 hkK
+    have hmPos : 0 < M n k := by
+      unfold M
+      exact Nat.sub_pos_of_lt hklt
+    have hp2dvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 hmod0
+    have hp2_le_m : p ^ 2 <= M n k := Nat.le_of_dvd hmPos hp2dvd
+    have hp_le_sq : p <= p ^ 2 := by
+      calc
+        p = p * 1 := by simp
+        _ <= p * p := Nat.mul_le_mul_left p (Nat.succ_le_of_lt hp.pos)
+        _ = p ^ 2 := by simp [pow_two]
+    have hp_le_n : p <= n := by
+      exact le_trans hp_le_sq (le_trans hp2_le_m (Nat.sub_le n (2 ^ k)))
+    have hpIcc : p ∈ Finset.Icc (z n + 1) n := Finset.mem_Icc.mpr
+      ⟨Nat.succ_le_of_lt hpgt, hp_le_n⟩
+    have hpSupport : p ∈ largePrimeSupport n := by
+      unfold largePrimeSupport
+      exact Finset.mem_filter.mpr ⟨hpIcc, hp⟩
+    have hkBadAt : k ∈ badAt p := Finset.mem_filter.mpr ⟨hkK, hmod0⟩
+    exact Finset.mem_biUnion.mpr ⟨p, hpSupport, hkBadAt⟩
+  calc
+    (B n (z n)).card <= ((largePrimeSupport n).biUnion badAt).card := Finset.card_le_card hsubset
+    _ <= Finset.sum (largePrimeSupport n) (fun p => (badAt p).card) := Finset.card_biUnion_le
+    _ = Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
+      simp [Np, badAt]
+
+/-- G2 (coarse form): summing local bounds over large-prime support. -/
+theorem G2_large_prime_via_local (n : Nat) :
+  Finset.sum (largePrimeSupport n) (fun p => Np n p) <=
+    (largePrimeSupport n).card * (L n + 1) := by
+  have hpoint : ∀ p ∈ largePrimeSupport n, Np n p <= L n + 1 := by
+    intro p hp
+    exact L2_local_periodic n p ((Finset.mem_filter.mp hp).2)
+  calc
+    Finset.sum (largePrimeSupport n) (fun p => Np n p) <=
+        Finset.sum (largePrimeSupport n) (fun _ => L n + 1) := by
+          exact Finset.sum_le_sum hpoint
+    _ = (largePrimeSupport n).card * (L n + 1) := by
+          simp
+
+/-- G3: strict asymptotic control for large-prime contamination (analytic input). -/
+def G3_large_prime_error : Prop :=
+  exists N2 : Nat, forall n : Nat, N2 <= n -> Odd n -> (B n (z n)).card < L n
+
+/--
+Sufficient condition for `G3_large_prime_error`:
+an eventual strict bound on the large-prime sum already implies strict control of `B`.
+-/
+def G3_sum_bound_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    Finset.sum (largePrimeSupport n) (fun p => Np n p) < L n
+
+theorem G3_of_sum_bound_eventually (hSum : G3_sum_bound_eventually) :
+    G3_large_prime_error := by
+  rcases hSum with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact lt_of_le_of_lt (G1_large_prime_decomp n) (hN n hn hodd)
+
+/-- Exponents below `L n` produce powers strictly below `n` (for positive `n`). -/
+lemma two_pow_lt_of_lt_log {n k : Nat} (hn : 0 < n) (hk : k < L n) : 2 ^ k < n := by
+  unfold L at hk
+  have hpow : 2 ^ k < 2 ^ Nat.log 2 n := Nat.pow_lt_pow_right Nat.one_lt_two hk
+  have hle : 2 ^ Nat.log 2 n <= n := Nat.pow_log_le_self 2 (Nat.ne_of_gt hn)
+  exact lt_of_lt_of_le hpow hle
+
+/-- Lower bound for the cardinality of the exponent window. -/
+lemma L_le_card_K_of_pos {n : Nat} (hn : 0 < n) : L n <= (K n).card := by
+  have hsubset : Finset.range (L n) ⊆ K n := by
+    intro k hk
+    unfold K candidateExponents
+    refine Finset.mem_filter.mpr ?_
+    refine ⟨Finset.mem_range.mpr (lt_trans (Finset.mem_range.mp hk) (Nat.lt_succ_self _)), ?_⟩
+    exact two_pow_lt_of_lt_log hn (Finset.mem_range.mp hk)
+  have hcard : (Finset.range (L n)).card <= (K n).card := Finset.card_le_card hsubset
+  simpa using hcard
+
+/--
+Sufficient condition for `S1_small_prime_sieve`:
+eventually, the small-prime-clean set `A` coincides with the whole exponent window `K`.
+-/
+def S1_full_window_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n -> A n (z n) = K n
+
+theorem S1_of_full_window_eventually (hA : S1_full_window_eventually) :
+    S1_small_prime_sieve := by
+  rcases hA with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  have hnpos : 0 < n := hodd.pos
+  have hEq : A n (z n) = K n := hN n hn hodd
+  calc
+    L n <= (K n).card := L_le_card_K_of_pos hnpos
+    _ = (A n (z n)).card := by simp [hEq]
+
+/--
+Sufficient condition for `G3_large_prime_error`:
+eventually, the support-size coarse bound is already `< L n`.
+-/
+def G3_support_bound_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeSupport n).card * (L n + 1) < L n
+
+theorem G3_of_support_bound_eventually (hSupp : G3_support_bound_eventually) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact lt_of_le_of_lt (le_trans (G1_large_prime_decomp n) (G2_large_prime_via_local n))
+    (hN n hn hodd)
+
+/-- F1: positive survivor count from small and large prime estimates. -/
+theorem F1_positive_survivors (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
+    exists N3 : Nat,
+      forall n : Nat, N3 <= n -> Odd n -> (A n (z n)).card - (B n (z n)).card > 0 := by
+  rcases hS1 with ⟨N1, hS1'⟩
+  rcases hG3 with ⟨N2, hG3'⟩
+  refine ⟨max N1 N2, ?_⟩
+  intro n hn hodd
+  have hn1 : N1 <= n := le_trans (le_max_left N1 N2) hn
+  have hn2 : N2 <= n := le_trans (le_max_right N1 N2) hn
+  have hA : L n <= (A n (z n)).card := hS1' n hn1 hodd
+  have hB : (B n (z n)).card < L n := hG3' n hn2 hodd
+  exact Nat.sub_pos_of_lt (lt_of_lt_of_le hB hA)
+
+/-- F2: eventual existence of a squarefree translated value. -/
+theorem F2_eventual_squarefree (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
+    exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+      exists k : Nat, k ∈ K n /\ Squarefree (M n k) := by
+  rcases F1_positive_survivors hS1 hG3 with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact C4 (hN n hn hodd)
+
+/-- T0: asymptotic theorem from the graph assumptions. -/
+theorem T0_erdos11_from_graph_assumptions
+    (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) : Erdos11Conjecture := by
+  rcases F2_eventual_squarefree hS1 hG3 with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  rcases hN n hn hodd with ⟨k, hkK, hsq⟩
+  exact C5 (C1 hkK) hsq
+
+end AsymptoticGraph
+
+end Erdos11
