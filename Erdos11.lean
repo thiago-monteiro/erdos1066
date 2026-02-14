@@ -181,6 +181,12 @@ noncomputable def B (n z : Nat) : Finset Nat := by
   exact (K n).filter (fun k =>
     exists p : Nat, Nat.Prime p /\ z < p /\ (M n k) % (p ^ 2) = 0)
 
+/-- Small-prime bad set: divisible by `p^2` for some prime `p ≤ z`. -/
+noncomputable def smallPrimeBad (n z : Nat) : Finset Nat := by
+  classical
+  exact (K n).filter (fun k =>
+    exists p : Nat, Nat.Prime p /\ p <= z /\ (M n k) % (p ^ 2) = 0)
+
 /-- L1: local counting function for a fixed prime `p`. -/
 def Np (n p : Nat) : Nat :=
   ((K n).filter (fun k => (M n k) % (p ^ 2) = 0)).card
@@ -198,11 +204,49 @@ lemma B_subset_K (n z0 : Nat) : B n z0 ⊆ K n := by
   intro k hk
   exact (Finset.mem_filter.mp hk).1
 
+lemma smallPrimeBad_subset_K (n z0 : Nat) : smallPrimeBad n z0 ⊆ K n := by
+  classical
+  intro k hk
+  exact (Finset.mem_filter.mp hk).1
+
 lemma card_A_le_card_K (n z0 : Nat) : (A n z0).card <= (K n).card :=
   Finset.card_le_card (A_subset_K n z0)
 
 lemma card_B_le_card_K (n z0 : Nat) : (B n z0).card <= (K n).card :=
   Finset.card_le_card (B_subset_K n z0)
+
+lemma A_eq_K_sdiff_smallPrimeBad (n z0 : Nat) :
+    A n z0 = K n \ smallPrimeBad n z0 := by
+  classical
+  ext k
+  constructor
+  · intro hkA
+    have hkK : k ∈ K n := (Finset.mem_filter.mp hkA).1
+    have hsmall :
+        forall p : Nat, Nat.Prime p -> p <= z0 -> Not ((M n k) % (p ^ 2) = 0) :=
+      (Finset.mem_filter.mp hkA).2
+    refine Finset.mem_sdiff.mpr ?_
+    refine ⟨hkK, ?_⟩
+    intro hkBad
+    rcases (Finset.mem_filter.mp hkBad).2 with ⟨p, hp, hpz, hmod0⟩
+    exact hsmall p hp hpz hmod0
+  · intro hkDiff
+    rcases Finset.mem_sdiff.mp hkDiff with ⟨hkK, hkNotBad⟩
+    refine Finset.mem_filter.mpr ?_
+    refine ⟨hkK, ?_⟩
+    intro p hp hpz hmod0
+    apply hkNotBad
+    refine Finset.mem_filter.mpr ?_
+    exact ⟨hkK, ⟨p, hp, hpz, hmod0⟩⟩
+
+lemma card_A_eq_card_K_sub_smallPrimeBad (n z0 : Nat) :
+    (A n z0).card = (K n).card - (smallPrimeBad n z0).card := by
+  classical
+  calc
+    (A n z0).card = (K n \ smallPrimeBad n z0).card := by
+      simp [A_eq_K_sdiff_smallPrimeBad n z0]
+    _ = (K n).card - (smallPrimeBad n z0).card := by
+      exact Finset.card_sdiff_of_subset (smallPrimeBad_subset_K n z0)
 
 /-- C1: membership in `K n` gives `2^k < n`. -/
 lemma C1 {n k : Nat} (hk : k ∈ K n) : 2 ^ k < n := by
@@ -280,6 +324,14 @@ lemma L2_local_periodic (n p : Nat) (_hp : Nat.Prime p) :
 def S1_small_prime_sieve : Prop :=
   exists N1 : Nat, forall n : Nat, N1 <= n -> Odd n -> L n <= (A n (z n)).card
 
+/--
+Sufficient condition for `S1_small_prime_sieve`:
+eventually, the small-prime bad set has cardinality at most `|K n| - L n`.
+-/
+def S1_small_prime_bad_bound_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (smallPrimeBad n (z n)).card <= (K n).card - L n
+
 /-- G1: decompose large-prime contribution via local counts. -/
 theorem G1_large_prime_decomp (n : Nat) :
   (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
@@ -349,6 +401,33 @@ theorem G3_of_sum_bound_eventually (hSum : G3_sum_bound_eventually) :
   intro n hn hodd
   exact lt_of_le_of_lt (G1_large_prime_decomp n) (hN n hn hodd)
 
+/--
+Sufficient condition for `G3_large_prime_error`:
+eventually, local counts are uniformly bounded by a constant `C`,
+and support size times `C` is strictly below `L n`.
+-/
+def G3_uniform_local_bound_eventually (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (forall p : Nat, p ∈ largePrimeSupport n -> Np n p <= C) /\
+    (largePrimeSupport n).card * C < L n
+
+theorem G3_of_uniform_local_bound_eventually {C : Nat}
+    (hUni : G3_uniform_local_bound_eventually C) : G3_large_prime_error := by
+  rcases hUni with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  rcases hN n hn hodd with ⟨hpoint, hmul⟩
+  have hsum :
+      Finset.sum (largePrimeSupport n) (fun p => Np n p) <=
+        (largePrimeSupport n).card * C := by
+    calc
+      Finset.sum (largePrimeSupport n) (fun p => Np n p) <=
+          Finset.sum (largePrimeSupport n) (fun _ => C) := by
+            exact Finset.sum_le_sum (by intro p hp; exact hpoint p hp)
+      _ = (largePrimeSupport n).card * C := by
+            simp
+  exact lt_of_le_of_lt (le_trans (G1_large_prime_decomp n) hsum) hmul
+
 /-- Exponents below `L n` produce powers strictly below `n` (for positive `n`). -/
 lemma two_pow_lt_of_lt_log {n k : Nat} (hn : 0 < n) (hk : k < L n) : 2 ^ k < n := by
   unfold L at hk
@@ -366,6 +445,25 @@ lemma L_le_card_K_of_pos {n : Nat} (hn : 0 < n) : L n <= (K n).card := by
     exact two_pow_lt_of_lt_log hn (Finset.mem_range.mp hk)
   have hcard : (Finset.range (L n)).card <= (K n).card := Finset.card_le_card hsubset
   simpa using hcard
+
+theorem S1_of_small_prime_bad_bound_eventually (hBad : S1_small_prime_bad_bound_eventually) :
+    S1_small_prime_sieve := by
+  rcases hBad with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  have hnpos : 0 < n := hodd.pos
+  have hL : L n <= (K n).card := L_le_card_K_of_pos hnpos
+  have hbad : (smallPrimeBad n (z n)).card <= (K n).card - L n := hN n hn hodd
+  have hsub :
+      (K n).card - ((K n).card - L n) <= (K n).card - (smallPrimeBad n (z n)).card := by
+    exact Nat.sub_le_sub_left hbad (K n).card
+  have hL_to_Kbad : L n <= (K n).card - (smallPrimeBad n (z n)).card := by
+    simpa [Nat.sub_sub_self hL] using hsub
+  calc
+    L n <= (K n).card - (smallPrimeBad n (z n)).card := hL_to_Kbad
+    _ = (A n (z n)).card := by
+      symm
+      exact card_A_eq_card_K_sub_smallPrimeBad n (z n)
 
 /--
 Sufficient condition for `S1_small_prime_sieve`:
