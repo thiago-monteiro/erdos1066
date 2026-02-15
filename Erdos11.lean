@@ -338,6 +338,25 @@ lemma card_A_sub_card_B_eq_zero_of_not_represents {n z0 : Nat} (hNotRep : ¬ Rep
     (A n z0).card - (B n z0).card = 0 := by
   exact Nat.sub_eq_zero_of_le (card_A_le_card_B_of_not_represents hNotRep)
 
+lemma card_K_le_smallPrimeBad_add_B_of_not_represents {n : Nat}
+    (hNotRep : ¬ Represents n) :
+    (K n).card <= (smallPrimeBad n (z n)).card + (B n (z n)).card := by
+  have hKminus_le_B :
+      (K n \ smallPrimeBad n (z n)).card <= (B n (z n)).card := by
+    have hAeq : A n (z n) = K n \ smallPrimeBad n (z n) := A_eq_K_sdiff_smallPrimeBad n (z n)
+    have hA_le_B : (A n (z n)).card <= (B n (z n)).card :=
+      card_A_le_card_B_of_not_represents (z0 := z n) hNotRep
+    simpa [hAeq] using hA_le_B
+  have hKs : (K n).card - (smallPrimeBad n (z n)).card <= (B n (z n)).card := by
+    have hcard :
+        (K n \ smallPrimeBad n (z n)).card = (K n).card - (smallPrimeBad n (z n)).card :=
+      Finset.card_sdiff_of_subset (smallPrimeBad_subset_K n (z n))
+    simpa [hcard] using hKminus_le_B
+  have hK_le_BS :
+      (K n).card <= (B n (z n)).card + (smallPrimeBad n (z n)).card :=
+    (Nat.sub_le_iff_le_add).1 hKs
+  simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le_BS
+
 /-- Prime support used in small-prime counting. -/
 noncomputable def smallPrimeSupport (n : Nat) : Finset Nat := by
   classical
@@ -5995,33 +6014,10 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
     simpa [S, Ln] using hSmallRaw
   have hLarge : 16673316660 * B0 + Δ * Ln <= 12367918777 * Ln := by
     simpa [B0, Ln] using hLargeRaw
-  have hKminus_le_B :
-      (AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card <=
-        (AsymptoticGraph.B n (AsymptoticGraph.z n)).card := by
-    have hAeq :
-        AsymptoticGraph.A n (AsymptoticGraph.z n) =
-          AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n) :=
-      AsymptoticGraph.A_eq_K_sdiff_smallPrimeBad n (AsymptoticGraph.z n)
-    have hA_le_B :
-        (AsymptoticGraph.A n (AsymptoticGraph.z n)).card <=
-          (AsymptoticGraph.B n (AsymptoticGraph.z n)).card :=
-      AsymptoticGraph.card_A_le_card_B_of_not_represents (z0 := AsymptoticGraph.z n) hNotRep
-    simpa [hAeq] using hA_le_B
-  have hKs :
-      Kc - S <= B0 := by
-    have hcard :
-        (AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card =
-          (AsymptoticGraph.K n).card - (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card :=
-      Finset.card_sdiff_of_subset (AsymptoticGraph.smallPrimeBad_subset_K n (AsymptoticGraph.z n))
-    simpa [Kc, S, B0, hcard] using hKminus_le_B
   have hK_le_SB :
       Kc <= S + B0 := by
-    have hK_le_BS :
-        (AsymptoticGraph.K n).card <=
-          (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
-            (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card :=
-      (Nat.sub_le_iff_le_add).1 (by simpa [Kc, S, B0] using hKs)
-    simpa [Kc, S, B0, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le_BS
+    simpa [Kc, S, B0] using
+      (AsymptoticGraph.card_K_le_smallPrimeBad_add_B_of_not_represents (n := n) hNotRep)
   have hL_le_K : Ln <= Kc := by
     simpa [Ln, Kc] using AsymptoticGraph.L_le_card_K_of_pos hn0
   have hL_le_SB : Ln <= S + B0 := le_trans hL_le_K hK_le_SB
