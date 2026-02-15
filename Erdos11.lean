@@ -5824,6 +5824,13 @@ lemma not_MatchedDensityBoundsScaled16673316660 : ¬ MatchedDensityBoundsScaled1
   rcases h with ⟨a, b, d, hba, hscaled, hS1, hG3⟩
   exact (not_density_pair_of_scaled16673316660_le hba hscaled) ⟨hS1, hG3⟩
 
+lemma not_MatchedDensityBoundsScaled16673316660_of_not_Erdos11Conjecture
+    (hNot : ¬ Erdos11Conjecture) : ¬ MatchedDensityBoundsScaled16673316660 := by
+  intro hScaled
+  apply (not_MatchedDensityBounds_of_not_Erdos11Conjecture hNot)
+  rcases hScaled with ⟨a, b, d, hba, _hscaled, hS1, hG3⟩
+  exact ⟨a, b, d, hba, hS1, hG3⟩
+
 lemma matchedDensityBounds_implies_a_le_d (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ a <= d /\ S1_density a d /\ G3_density b d := by
   rcases h with ⟨a, b, d, hba, hS1, hG3⟩
@@ -5933,5 +5940,45 @@ lemma erdos11_of_unbounded_counterexample_bridge16673316660
   apply erdos11_of_counterexample_bridge16673316660
   intro hNot
   exact hBridge (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot)
+
+/--
+Named remaining extraction target:
+unbounded odd counterexamples force the scaled matched-density profile.
+-/
+def CounterexampleBridge16673316660 : Prop :=
+  (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) →
+    AsymptoticGraph.MatchedDensityBoundsScaled16673316660
+
+/--
+Equivalent bridge form phrased directly from `¬Erdos11Conjecture`.
+-/
+def CounterexampleBridgeNeg16673316660 : Prop :=
+  ¬ Erdos11Conjecture → AsymptoticGraph.MatchedDensityBoundsScaled16673316660
+
+lemma counterexampleBridgeNeg16673316660_iff :
+    CounterexampleBridgeNeg16673316660 ↔ CounterexampleBridge16673316660 := by
+  constructor
+  · intro hNeg hUnbounded
+    exact hNeg (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mpr hUnbounded)
+  · intro hPos hNot
+    exact hPos (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot)
+
+lemma erdos11_iff_counterexampleBridgeNeg16673316660 :
+    Erdos11Conjecture ↔ CounterexampleBridgeNeg16673316660 := by
+  constructor
+  · intro hE hNot
+    exact False.elim (hNot hE)
+  · intro hBridge
+    exact erdos11_of_counterexample_bridge16673316660 hBridge
+
+lemma erdos11_iff_counterexampleBridge16673316660 :
+    Erdos11Conjecture ↔ CounterexampleBridge16673316660 := by
+  constructor
+  · intro hE hUnbounded
+    have hNot : ¬ Erdos11Conjecture :=
+      not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mpr hUnbounded
+    exact False.elim (hNot hE)
+  · intro hBridge
+    exact erdos11_of_unbounded_counterexample_bridge16673316660 hBridge
 
 end Erdos11
