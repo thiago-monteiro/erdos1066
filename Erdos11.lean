@@ -482,6 +482,64 @@ lemma Np_le_order_class_bound
       card_range_modEq_le_div_add_one hTpos
     exact le_trans hcard1 (by simpa [T] using hcard2)
 
+/--
+Odd-prime local bound with case split:
+if `p ∣ n`, the local count is zero; otherwise we can use the order-class bound.
+-/
+lemma Np_le_order_class_bound_of_prime_ne_two
+    {n p : Nat}
+    (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    Np n p <=
+      (L n + 1) /
+        orderOf
+          (ZMod.unitOfCoprime 2
+            ((Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+              (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+                intro hdiv
+                rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+                · exact hp.ne_one h1
+                · exact hpne2 h2)).symm))) + 1 := by
+  let h2cop : Nat.Coprime 2 (p ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+      (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm)
+  by_cases hpn : p ∣ n
+  · have hzero : Np n p = 0 := Np_eq_zero_of_prime_ne_two_dvd_n hp hpne2 hpn
+    rw [hzero]
+    exact Nat.zero_le _
+  · have hncopP : Nat.Coprime p n := (Nat.Prime.coprime_iff_not_dvd hp).2 hpn
+    have hncop : Nat.Coprime n (p ^ 2) := by
+      have hnp : Nat.Coprime n p := hncopP.symm
+      exact (Nat.coprime_pow_right_iff (by decide : 0 < 2) n p).2 hnp
+    simpa [h2cop] using Np_le_order_class_bound (n := n) (p := p) h2cop hncop
+
+/--
+Order of `2` in the unit group modulo `p^2` (for odd prime `p`).
+-/
+noncomputable def twoOrderSq (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) : Nat :=
+  orderOf
+    (ZMod.unitOfCoprime 2
+      ((Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+        (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+          intro hdiv
+          rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+          · exact hp.ne_one h1
+          · exact hpne2 h2)).symm)))
+
+lemma twoOrderSq_pos (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    0 < twoOrderSq p hp hpne2 := by
+  unfold twoOrderSq
+  exact orderOf_pos _
+
+lemma Np_le_order_class_bound_of_prime_ne_two'
+    {n p : Nat}
+    (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    Np n p <= (L n + 1) / twoOrderSq p hp hpne2 + 1 := by
+  simpa [twoOrderSq] using Np_le_order_class_bound_of_prime_ne_two (n := n) hp hpne2
+
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
     (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
