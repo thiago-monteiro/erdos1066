@@ -540,6 +540,36 @@ lemma Np_le_order_class_bound_of_prime_ne_two'
     Np n p <= (L n + 1) / twoOrderSq p hp hpne2 + 1 := by
   simpa [twoOrderSq] using Np_le_order_class_bound_of_prime_ne_two (n := n) hp hpne2
 
+lemma Np_le_smallPrimeSupport_piecewise (n p : Nat)
+    (hpS : p ∈ smallPrimeSupport n) :
+    Np n p <=
+      if hp2 : p = 2 then
+        L n + 1
+      else
+        (L n + 1) / twoOrderSq p ((Finset.mem_filter.mp hpS).2) hp2 + 1 := by
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
+  by_cases hp2 : p = 2
+  · subst hp2
+    exact L2_local_periodic n 2 (by decide)
+  · have hloc : Np n p <= (L n + 1) / twoOrderSq p hp hp2 + 1 :=
+      Np_le_order_class_bound_of_prime_ne_two' (n := n) hp hp2
+    simpa [hp2] using hloc
+
+lemma Np_le_largePrimeSupport_piecewise (n p : Nat)
+    (hpS : p ∈ largePrimeSupport n) :
+    Np n p <=
+      if hp2 : p = 2 then
+        L n + 1
+      else
+        (L n + 1) / twoOrderSq p ((Finset.mem_filter.mp hpS).2) hp2 + 1 := by
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
+  by_cases hp2 : p = 2
+  · subst hp2
+    exact L2_local_periodic n 2 (by decide)
+  · have hloc : Np n p <= (L n + 1) / twoOrderSq p hp hp2 + 1 :=
+      Np_le_order_class_bound_of_prime_ne_two' (n := n) hp hp2
+    simpa [hp2] using hloc
+
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
     (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
