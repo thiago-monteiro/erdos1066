@@ -1695,6 +1695,11 @@ lemma not_S1_density_of_lt {a d : Nat} (hda : d < a) : ¬ S1_density a d := by
     exact hleft ▸ (lt_of_lt_of_eq hsum hright)
   exact (Nat.not_le_of_gt hstrict) hupper
 
+lemma S1_density_implies_a_le_d {a d : Nat} (hS1 : S1_density a d) : a <= d := by
+  by_cases had : a <= d
+  · exact had
+  · exact False.elim ((not_S1_density_of_lt (lt_of_not_ge had)) hS1)
+
 /--
 Density-form large-prime bound:
 eventually, `d * |B n| < b * L n`.
@@ -1754,6 +1759,14 @@ lemma not_density_pair_of_lt_lt {a b d : Nat}
     ¬ (S1_density a d ∧ G3_density b d) := by
   intro h
   exact not_S1_density_of_lt (lt_trans hdb hba) h.1
+
+lemma density_pair_implies_b_le_d {a b d : Nat}
+    (hba : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
+    b <= d := by
+  by_cases hbd : b <= d
+  · exact hbd
+  · have hdb : d < b := lt_of_not_ge hbd
+    exact False.elim ((not_density_pair_of_lt_lt hdb hba) ⟨hS1, hG3⟩)
 
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
@@ -1906,6 +1919,28 @@ there exist `a,b,d` with `b < a` giving matched density bounds.
 -/
 def MatchedDensityBounds : Prop :=
   exists a b d : Nat, b < a /\ S1_density a d /\ G3_density b d
+
+/--
+Strict density target requiring a full chain `d < b < a`.
+This is incompatible with `S1_density` by the modular barrier.
+-/
+def MatchedDensityBoundsStrict : Prop :=
+  exists a b d : Nat, d < b /\ b < a /\ S1_density a d /\ G3_density b d
+
+lemma not_MatchedDensityBoundsStrict : ¬ MatchedDensityBoundsStrict := by
+  intro h
+  rcases h with ⟨a, b, d, hdb, hba, hS1, hG3⟩
+  exact (not_density_pair_of_lt_lt hdb hba) ⟨hS1, hG3⟩
+
+lemma matchedDensityBounds_implies_a_le_d (h : MatchedDensityBounds) :
+    exists a b d : Nat, b < a /\ a <= d /\ S1_density a d /\ G3_density b d := by
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  exact ⟨a, b, d, hba, S1_density_implies_a_le_d hS1, hS1, hG3⟩
+
+lemma matchedDensityBounds_implies_b_le_d (h : MatchedDensityBounds) :
+    exists a b d : Nat, b < a /\ b <= d /\ S1_density a d /\ G3_density b d := by
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  exact ⟨a, b, d, hba, density_pair_implies_b_le_d hba hS1 hG3, hS1, hG3⟩
 
 lemma T0_of_matched_density_bounds (h : MatchedDensityBounds) :
     Erdos11Conjecture := by
