@@ -1191,6 +1191,60 @@ def S1_density (a d : Nat) : Prop :=
     a * L n <= d * (A n (z n)).card
 
 /--
+Density lower bounds with slope strictly above `1` are impossible:
+if `d < a`, then `a * L n ≤ d * |A n|` cannot hold eventually.
+-/
+lemma not_S1_density_of_lt {a d : Nat} (hda : d < a) : ¬ S1_density a d := by
+  intro hS1
+  rcases hS1 with ⟨N1, hN1⟩
+  let t : Nat := max N1 (2 ^ (d + 1))
+  let n : Nat := 65 + 36 * t
+  have hnN : N1 <= n := by
+    dsimp [n, t]
+    omega
+  have hodd : Odd n := by
+    dsimp [n]
+    refine ⟨32 + 18 * t, ?_⟩
+    omega
+  have hbound : a * L n <= d * (A n (z n)).card := hN1 n hnN hodd
+  have hA_le_L1 : (A n (z n)).card <= L n + 1 := by
+    have hA_le_K : (A n (z n)).card <= (K n).card := Finset.card_le_card (A_subset_K n (z n))
+    exact le_trans hA_le_K (card_K_le n)
+  have hupper : a * L n <= d * (L n + 1) := by
+    exact le_trans hbound (Nat.mul_le_mul_left d hA_le_L1)
+  have hn0 : n ≠ 0 := by
+    dsimp [n]
+    omega
+  have hL_ge : d + 1 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    have ht : 2 ^ (d + 1) <= t := by
+      dsimp [t]
+      exact le_max_right N1 (2 ^ (d + 1))
+    have ht_le_n : t <= n := by
+      dsimp [n]
+      omega
+    exact le_trans ht ht_le_n
+  have hstrict : d * (L n + 1) < a * L n := by
+    have hdLtL : d < L n := lt_of_lt_of_le (Nat.lt_succ_self d) hL_ge
+    have hda1 : 1 <= a - d := Nat.succ_le_of_lt (Nat.sub_pos_of_lt hda)
+    have hgap : d < (a - d) * L n := by
+      have hmul_ge : L n <= (a - d) * L n := by
+        calc
+          L n = 1 * L n := by simp
+          _ <= (a - d) * L n := Nat.mul_le_mul_right (L n) hda1
+      exact lt_of_lt_of_le hdLtL hmul_ge
+    have hsum :
+        d * L n + d < d * L n + (a - d) * L n :=
+      Nat.add_lt_add_left hgap (d * L n)
+    have hleft : d * (L n + 1) = d * L n + d := by
+      simp [Nat.mul_add, Nat.add_comm]
+    have hright : d * L n + (a - d) * L n = a * L n := by
+      rw [← Nat.add_mul, Nat.add_sub_of_le (Nat.le_of_lt hda)]
+    exact hleft ▸ (lt_of_lt_of_eq hsum hright)
+  exact (Nat.not_le_of_gt hstrict) hupper
+
+/--
 Density-form large-prime bound:
 eventually, `d * |B n| < b * L n`.
 -/
@@ -1240,6 +1294,15 @@ lemma G3_density_of_lt {b d : Nat} (hbd : d < b) : G3_density b d := by
 
 /-- Concrete corollary used as a default large-prime density bound. -/
 lemma G3_density_two_one : G3_density 2 1 := G3_density_of_lt (by decide)
+
+/--
+Any density pair with strict chain `d < b < a` is inconsistent with the `S1` side.
+-/
+lemma not_density_pair_of_lt_lt {a b d : Nat}
+    (hdb : d < b) (hba : b < a) :
+    ¬ (S1_density a d ∧ G3_density b d) := by
+  intro h
+  exact not_S1_density_of_lt (lt_trans hdb hba) h.1
 
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
