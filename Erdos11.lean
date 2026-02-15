@@ -1438,6 +1438,38 @@ lemma pow_two_mod_thirteen_sixty_nine_of_mod1332_eq5 {k : Nat} (hkmod : k % 1332
       norm_num
     _ = 32 := by norm_num
 
+lemma pow_two_mod_thirty_seven_twenty_one_cycle (t : Nat) : (2 ^ (3660 * t)) % 3721 = 1 := by
+  have hbase : 2 ^ 3660 % 3721 = 1 := by native_decide
+  induction t with
+  | zero => norm_num
+  | succ t ih =>
+      have hExp : 3660 * (t + 1) = 3660 * t + 3660 := by omega
+      rw [hExp, Nat.pow_add]
+      calc
+        (2 ^ (3660 * t) * 2 ^ 3660) % 3721 =
+            (2 ^ (3660 * t) % 3721 * (2 ^ 3660 % 3721)) % 3721 := by
+              simp [Nat.mul_mod, Nat.mul_comm]
+        _ = (1 * 1) % 3721 := by rw [ih, hbase]
+        _ = 1 := by norm_num
+
+lemma pow_two_mod_thirty_seven_twenty_one_of_mod3660_eq4 {k : Nat} (hkmod : k % 3660 = 4) :
+    (2 ^ k) % 3721 = 16 := by
+  have hkdecomp : k = 3660 * (k / 3660) + 4 := by
+    have hdiv : k % 3660 + 3660 * (k / 3660) = k := Nat.mod_add_div k 3660
+    omega
+  rw [hkdecomp, Nat.pow_add]
+  have hcycle : (2 ^ (3660 * (k / 3660))) % 3721 = 1 := by
+    simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using
+      pow_two_mod_thirty_seven_twenty_one_cycle (k / 3660)
+  calc
+    (2 ^ (3660 * (k / 3660)) * 2 ^ 4) % 3721 =
+        (2 ^ (3660 * (k / 3660)) % 3721 * (2 ^ 4 % 3721)) % 3721 := by
+      simp [Nat.mul_mod, Nat.mul_comm]
+    _ = (1 * 16) % 3721 := by
+      rw [hcycle]
+      norm_num
+    _ = 16 := by norm_num
+
 lemma k_not_mem_A_of_mod9_class {n k : Nat}
     (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) (hkmod : k % 6 = 1) :
     k ∉ A n (z n) := by
@@ -1549,6 +1581,22 @@ lemma k_not_mem_A_of_mod1369_class {n k : Nat}
       omega
     simpa [pow_two] using this
   exact hsmall 37 (by decide) hz37 hmod0
+
+lemma k_not_mem_A_of_mod3721_class {n k : Nat}
+    (hz61 : 61 <= z n) (hmod3721 : n % 3721 = 16) (hkmod3660 : k % 3660 = 4) :
+    k ∉ A n (z n) := by
+  classical
+  intro hkA
+  have hsmall :
+      forall p : Nat, Nat.Prime p -> p <= z n -> Not ((M n k) % (p ^ 2) = 0) :=
+    (Finset.mem_filter.mp hkA).2
+  have hk3721 : (2 ^ k) % 3721 = 16 := pow_two_mod_thirty_seven_twenty_one_of_mod3660_eq4 hkmod3660
+  have hmod0 : (M n k) % (61 ^ 2) = 0 := by
+    unfold M
+    have : (n - 2 ^ k) % 3721 = 0 := by
+      omega
+    simpa [pow_two] using this
+  exact hsmall 61 (by decide) hz61 hmod0
 
 lemma mod9_class_one_range_subset_K_sdiff_A {n : Nat}
     (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) :
@@ -1708,6 +1756,25 @@ lemma mod1369_class_five_range_subset_K_sdiff_A {n : Nat}
     exact lt_of_lt_of_le hpow hle
   have hkK : k ∈ K n := mem_K_of_pow_lt hn0 hkPow
   have hkNotA : k ∉ A n (z n) := k_not_mem_A_of_mod1369_class hz37 hmod1369 hkmod1332
+  exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
+
+lemma mod3721_class_four_range_subset_K_sdiff_A {n : Nat}
+    (hn0 : n ≠ 0) (hz61 : 61 <= z n) (hmod3721 : n % 3721 = 16) :
+    {k ∈ Finset.range (L n) | k ≡ 4 [MOD 3660]} ⊆ K n \ A n (z n) := by
+  classical
+  intro k hk
+  have hkRange : k ∈ Finset.range (L n) := (Finset.mem_filter.mp hk).1
+  have hkLt : k < L n := Finset.mem_range.mp hkRange
+  have hkModEq : k ≡ 4 [MOD 3660] := (Finset.mem_filter.mp hk).2
+  have hkmod3660 : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using hkModEq
+  have hkPow : 2 ^ k < n := by
+    unfold L at hkLt
+    have hpow : 2 ^ k < 2 ^ Nat.log 2 n := Nat.pow_lt_pow_right Nat.one_lt_two hkLt
+    have hle : 2 ^ Nat.log 2 n <= n := Nat.pow_log_le_self 2 hn0
+    exact lt_of_lt_of_le hpow hle
+  have hkK : k ∈ K n := mem_K_of_pow_lt hn0 hkPow
+  have hkNotA : k ∉ A n (z n) := k_not_mem_A_of_mod3721_class hz61 hmod3721 hkmod3660
   exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
 
 lemma mod9_mod25_class_disjoint (m : Nat) :
@@ -2019,6 +2086,110 @@ lemma mod1681_mod1369_class_disjoint (m : Nat) :
     simpa [Nat.ModEq] using (Finset.mem_filter.mp hk1332).2
   have hk820To4 : k % 4 = 2 := by omega
   have hk1332To4 : k % 4 = 1 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod9_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 1 [MOD 6]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk6 hk3660
+  have hk6mod : k % 6 = 1 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk6).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk6To2 : k % 2 = 1 := by omega
+  have hk3660To2 : k % 2 = 0 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod20_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 0 [MOD 20]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk20 hk3660
+  have hk20mod : k % 20 = 0 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk20).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk3660To20 : k % 20 = 4 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod49_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 3 [MOD 42]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk42 hk3660
+  have hk42mod : k % 42 = 3 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk42).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk42To2 : k % 2 = 1 := by omega
+  have hk3660To2 : k % 2 = 0 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod121_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 6 [MOD 110]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk110 hk3660
+  have hk110mod : k % 110 = 6 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk110).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk110To10 : k % 10 = 6 := by omega
+  have hk3660To10 : k % 10 = 4 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod169_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 11 [MOD 156]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk156 hk3660
+  have hk156mod : k % 156 = 11 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk156).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk156To2 : k % 2 = 1 := by omega
+  have hk3660To2 : k % 2 = 0 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod1681_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 2 [MOD 820]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk820 hk3660
+  have hk820mod : k % 820 = 2 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk820).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk820To20 : k % 20 = 2 := by omega
+  have hk3660To20 : k % 20 = 4 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod1369_mod3721_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 5 [MOD 1332]}
+      {k ∈ Finset.range m | k ≡ 4 [MOD 3660]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk1332 hk3660
+  have hk1332mod : k % 1332 = 5 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk1332).2
+  have hk3660mod : k % 3660 = 4 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk3660).2
+  have hk1332To2 : k % 2 = 1 := by omega
+  have hk3660To2 : k % 2 = 0 := by omega
   have : False := by omega
   exact this.elim
 
