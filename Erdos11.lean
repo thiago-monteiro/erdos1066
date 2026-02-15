@@ -5521,6 +5521,42 @@ lemma not_density_pair_of_scaled16673316660_le {a b d : Nat}
   have hgap : 16673316660 * b < 12367918777 * d := density_pair_implies_scaled_gap16673316660 hba h.1 h.2
   exact Nat.not_le_of_gt hgap hscaled
 
+lemma not_density_pair_pointwise_of_not_represents {a b d n : Nat}
+    (hba : b < a)
+    (hLpos : 0 < L n)
+    (hNotRep : ¬ Represents n)
+    (hA : a * L n <= d * (A n (z n)).card)
+    (hB : d * (B n (z n)).card < b * L n) :
+    False := by
+  have hAleB : (A n (z n)).card <= (B n (z n)).card :=
+    card_A_le_card_B_of_not_represents (z0 := z n) hNotRep
+  have hAB : a * L n <= d * (B n (z n)).card := by
+    exact le_trans hA (Nat.mul_le_mul_left d hAleB)
+  have hltAB : a * L n < b * L n := lt_of_le_of_lt hAB hB
+  have hltBA : b * L n < a * L n := Nat.mul_lt_mul_of_pos_right hba hLpos
+  exact (lt_asymm hltBA hltAB)
+
+lemma not_density_pair_of_unbounded_odd_counterexamples {a b d : Nat}
+    (hba : b < a)
+    (hS1 : S1_density a d)
+    (hG3 : G3_density b d)
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N <= n ∧ Odd n ∧ ¬ Represents n) :
+    False := by
+  rcases hS1 with ⟨N1, hS1'⟩
+  rcases hG3 with ⟨N2, hG3'⟩
+  let N : Nat := max (max N1 N2) 3
+  rcases hUnbounded N with ⟨n, hnN, hodd, hNotRep⟩
+  have hn1 : N1 <= n := le_trans (le_trans (le_max_left N1 N2) (le_max_left (max N1 N2) 3)) hnN
+  have hn2 : N2 <= n := le_trans (le_trans (le_max_right N1 N2) (le_max_left (max N1 N2) 3)) hnN
+  have hn3 : 3 <= n := le_trans (le_max_right (max N1 N2) 3) hnN
+  have hLpos : 0 < L n := by
+    unfold L
+    have h2n : 2 <= n := by omega
+    exact Nat.log_pos Nat.one_lt_two h2n
+  have hA : a * L n <= d * (A n (z n)).card := hS1' n hn1 hodd
+  have hB : d * (B n (z n)).card < b * L n := hG3' n hn2 hodd
+  exact not_density_pair_pointwise_of_not_represents hba hLpos hNotRep hA hB
+
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
     (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
@@ -5672,6 +5708,15 @@ there exist `a,b,d` with `b < a` giving matched density bounds.
 -/
 def MatchedDensityBounds : Prop :=
   exists a b d : Nat, b < a /\ S1_density a d /\ G3_density b d
+
+lemma not_MatchedDensityBounds_of_not_Erdos11Conjecture
+    (hNot : ¬ Erdos11Conjecture) : ¬ MatchedDensityBounds := by
+  intro h
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  have hUnbounded :
+      ∀ N : Nat, ∃ n : Nat, N <= n ∧ Odd n ∧ ¬ Represents n :=
+    not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot
+  exact not_density_pair_of_unbounded_odd_counterexamples hba hS1 hG3 hUnbounded
 
 /--
 Strict density target requiring a full chain `d < b < a`.
