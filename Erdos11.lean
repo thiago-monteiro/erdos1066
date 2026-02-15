@@ -5975,19 +5975,26 @@ def CounterexampleBridgeNeg16673316660 : Prop :=
   ¬ Erdos11Conjecture → AsymptoticGraph.MatchedDensityBoundsScaled16673316660
 
 /--
+Generic split-margin hypothesis:
+both bad components carry a shared positive margin `Δ`, with coefficients summing to `d`.
+-/
+def SplitMargin (d cSmall cLarge : Nat) : Prop :=
+  ∃ Δ N0 : Nat, 0 < Δ ∧
+    ∀ n : Nat, N0 ≤ n → Odd n →
+      d * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        cSmall * AsymptoticGraph.L n ∧
+      d * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        cLarge * AsymptoticGraph.L n
+
+/--
 Analytic split package (step-1 target):
 for a fixed positive margin `Δ`, eventually both bad parts are bounded with strict
 headroom whose coefficients sum to `16673316660`.
 -/
 def AsymptoticSplitMargin16673316660 : Prop :=
-  ∃ Δ N0 : Nat, 0 < Δ ∧
-    ∀ n : Nat, N0 ≤ n → Odd n →
-      16673316660 * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
-          Δ * AsymptoticGraph.L n <=
-        4305397883 * AsymptoticGraph.L n ∧
-      16673316660 * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
-          Δ * AsymptoticGraph.L n <=
-        12367918777 * AsymptoticGraph.L n
+  SplitMargin 16673316660 4305397883 12367918777
 
 lemma matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660
     (hSplit : AsymptoticSplitMargin16673316660) :
@@ -6085,15 +6092,7 @@ and coefficients summing to `d`, unbounded odd counterexamples are impossible.
 lemma not_unbounded_odd_counterexamples_of_split_margin
     {d cSmall cLarge : Nat}
     (hSum : cSmall + cLarge = d)
-    (hSplit :
-      ∃ Δ N0 : Nat, 0 < Δ ∧
-        ∀ n : Nat, N0 ≤ n → Odd n →
-          d * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
-              Δ * AsymptoticGraph.L n <=
-            cSmall * AsymptoticGraph.L n ∧
-          d * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
-              Δ * AsymptoticGraph.L n <=
-            cLarge * AsymptoticGraph.L n) :
+    (hSplit : SplitMargin d cSmall cLarge) :
     ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
   intro hUnbounded
   rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
@@ -6155,6 +6154,36 @@ lemma not_unbounded_odd_counterexamples_of_split_margin
     exact lt_of_le_of_lt hScaled (lt_of_lt_of_le hStrict hUpper)
   exact (Nat.lt_irrefl _ hlt)
 
+lemma erdos11_of_not_unbounded_odd_counterexamples
+    (hNo :
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n)) :
+    Erdos11Conjecture := by
+  by_contra hNot
+  exact hNo (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot)
+
+lemma erdos11_iff_not_unbounded_odd_counterexamples :
+    Erdos11Conjecture ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  constructor
+  · intro hE hUnbounded
+    have hNot : ¬ Erdos11Conjecture :=
+      not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mpr hUnbounded
+    exact hNot hE
+  · intro hNo
+    exact erdos11_of_not_unbounded_odd_counterexamples hNo
+
+/--
+Master conditional theorem:
+any split-margin package with coefficient sum `d` yields Erdős #11.
+-/
+lemma erdos11_of_split_margin
+    {d cSmall cLarge : Nat}
+    (hSum : cSmall + cLarge = d)
+    (hSplit : SplitMargin d cSmall cLarge) :
+    Erdos11Conjecture := by
+  exact erdos11_of_not_unbounded_odd_counterexamples
+    (not_unbounded_odd_counterexamples_of_split_margin hSum hSplit)
+
 /--
 Step-2 contradiction: the split-margin package rules out unbounded odd counterexamples.
 -/
@@ -6181,22 +6210,15 @@ Unconditional closure from the analytic split package.
 lemma erdos11_of_asymptotic_split_margin16673316660
     (hSplit : AsymptoticSplitMargin16673316660) :
     Erdos11Conjecture := by
-  exact erdos11_of_unbounded_counterexample_bridge16673316660
-    (counterexampleBridge16673316660_of_asymptotic_split_margin16673316660 hSplit)
+  exact erdos11_of_split_margin (d := 16673316660) (cSmall := 4305397883) (cLarge := 12367918777)
+    (by norm_num) hSplit
 
 /--
 Alternative split package with a one-tick shifted coefficient split.
 This keeps the same total `16673316660` while avoiding the exact threshold lock.
 -/
 def AsymptoticSplitMargin16673316660Safe : Prop :=
-  ∃ Δ N0 : Nat, 0 < Δ ∧
-    ∀ n : Nat, N0 ≤ n → Odd n →
-      16673316660 * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
-          Δ * AsymptoticGraph.L n <=
-        4305397884 * AsymptoticGraph.L n ∧
-      16673316660 * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
-          Δ * AsymptoticGraph.L n <=
-        12367918776 * AsymptoticGraph.L n
+  SplitMargin 16673316660 4305397884 12367918776
 
 lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Safe
     (hSplit : AsymptoticSplitMargin16673316660Safe) :
@@ -6208,10 +6230,8 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Saf
 lemma erdos11_of_asymptotic_split_margin16673316660Safe
     (hSplit : AsymptoticSplitMargin16673316660Safe) :
     Erdos11Conjecture := by
-  apply erdos11_of_unbounded_counterexample_bridge16673316660
-  intro hUnbounded
-  exact False.elim
-    ((not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Safe hSplit) hUnbounded)
+  exact erdos11_of_split_margin (d := 16673316660) (cSmall := 4305397884) (cLarge := 12367918776)
+    (by norm_num) hSplit
 
 lemma counterexampleBridgeNeg16673316660_iff :
     CounterexampleBridgeNeg16673316660 ↔ CounterexampleBridge16673316660 := by
