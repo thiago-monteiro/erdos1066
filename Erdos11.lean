@@ -5989,6 +5989,94 @@ def AsymptoticSplitMargin16673316660 : Prop :=
           Δ * AsymptoticGraph.L n <=
         12367918777 * AsymptoticGraph.L n
 
+lemma matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660
+    (hSplit : AsymptoticSplitMargin16673316660) :
+    AsymptoticGraph.MatchedDensityBoundsScaled16673316660 := by
+  rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
+  let N : Nat := max N0 3
+  refine ⟨12367918778, 12367918777, 16673316660, by decide, ?_, ?_, ?_⟩
+  · simpa [Nat.mul_comm]
+  · refine ⟨N, ?_⟩
+    intro n hn hodd
+    let Ln : Nat := AsymptoticGraph.L n
+    let S : Nat := (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card
+    let Kc : Nat := (AsymptoticGraph.K n).card
+    have hN0 : N0 ≤ n := le_trans (le_max_left N0 3) hn
+    rcases hSplitN n hN0 hodd with ⟨hSmallRaw, _⟩
+    have hSmall : 16673316660 * S + Δ * Ln <= 4305397883 * Ln := by
+      simpa [S, Ln] using hSmallRaw
+    have hDelta_ge_one : 1 <= Δ := Nat.succ_le_of_lt hΔ
+    have hL_le_deltaL : Ln <= Δ * Ln := by
+      simpa [one_mul] using (Nat.mul_le_mul_right Ln hDelta_ge_one)
+    have hL_le_K : Ln <= Kc := by
+      simpa [Ln, Kc] using AsymptoticGraph.L_le_card_K_of_pos hodd.pos
+    have hLift :
+        12367918778 * Ln + 16673316660 * S <=
+          12367918777 * Ln + (16673316660 * S + Δ * Ln) := by
+      have hLstep : 12367918778 * Ln <= 12367918777 * Ln + Δ * Ln := by
+        have hEq : 12367918778 * Ln = 12367918777 * Ln + Ln := by omega
+        calc
+          12367918778 * Ln = 12367918777 * Ln + Ln := hEq
+          _ <= 12367918777 * Ln + Δ * Ln := Nat.add_le_add_left hL_le_deltaL (12367918777 * Ln)
+      have hAdd :
+          12367918778 * Ln + 16673316660 * S <=
+            (12367918777 * Ln + Δ * Ln) + 16673316660 * S :=
+        Nat.add_le_add_right hLstep (16673316660 * S)
+      simpa [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using hAdd
+    have hRightBound :
+        12367918777 * Ln + (16673316660 * S + Δ * Ln) <= 16673316660 * Ln := by
+      have hSmall' :
+          12367918777 * Ln + (16673316660 * S + Δ * Ln) <=
+            12367918777 * Ln + 4305397883 * Ln :=
+        Nat.add_le_add_left hSmall (12367918777 * Ln)
+      have hRight :
+          12367918777 * Ln + 4305397883 * Ln = 16673316660 * Ln := by
+        calc
+          12367918777 * Ln + 4305397883 * Ln = (12367918777 + 4305397883) * Ln := by
+            rw [Nat.add_mul]
+          _ = 16673316660 * Ln := by norm_num
+      simpa [hRight] using hSmall'
+    have hMain :
+        12367918778 * Ln + 16673316660 * S <= 16673316660 * Kc := by
+      exact le_trans (le_trans hLift hRightBound) (Nat.mul_le_mul_left 16673316660 hL_le_K)
+    have hSub :
+        12367918778 * Ln <= 16673316660 * Kc - 16673316660 * S := by
+      exact Nat.le_sub_of_add_le hMain
+    have hAeq :
+        (AsymptoticGraph.A n (AsymptoticGraph.z n)).card = Kc - S := by
+      simpa [Kc, S] using AsymptoticGraph.card_A_eq_card_K_sub_smallPrimeBad n (AsymptoticGraph.z n)
+    calc
+      12367918778 * AsymptoticGraph.L n = 12367918778 * Ln := by rfl
+      _ <= 16673316660 * Kc - 16673316660 * S := hSub
+      _ = 16673316660 * (Kc - S) := by
+        symm
+        exact Nat.mul_sub_left_distrib 16673316660 Kc S
+      _ = 16673316660 * (AsymptoticGraph.A n (AsymptoticGraph.z n)).card := by
+        simp [hAeq]
+  · refine ⟨N, ?_⟩
+    intro n hn hodd
+    let Ln : Nat := AsymptoticGraph.L n
+    let B0 : Nat := (AsymptoticGraph.B n (AsymptoticGraph.z n)).card
+    have hN0 : N0 <= n := le_trans (le_max_left N0 3) hn
+    rcases hSplitN n hN0 hodd with ⟨_, hLargeRaw⟩
+    have hLarge : 16673316660 * B0 + Δ * Ln <= 12367918777 * Ln := by
+      simpa [B0, Ln] using hLargeRaw
+    have h2n : 2 <= n := by omega
+    have hLpos : 0 < Ln := by
+      unfold Ln AsymptoticGraph.L
+      exact Nat.log_pos Nat.one_lt_two h2n
+    have hDeltaLnPos : 0 < Δ * Ln := Nat.mul_pos hΔ hLpos
+    calc
+      16673316660 * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card = 16673316660 * B0 := by rfl
+      _ < 16673316660 * B0 + Δ * Ln := Nat.lt_add_of_pos_right hDeltaLnPos
+      _ <= 12367918777 * Ln := hLarge
+      _ = 12367918777 * AsymptoticGraph.L n := by rfl
+
+lemma not_AsymptoticSplitMargin16673316660 : ¬ AsymptoticSplitMargin16673316660 := by
+  intro hSplit
+  exact AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660
+    (matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660 hSplit)
+
 /--
 Step-2 contradiction: the split-margin package rules out unbounded odd counterexamples.
 -/
