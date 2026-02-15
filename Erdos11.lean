@@ -325,6 +325,109 @@ lemma L2_local_periodic (n p : Nat) (_hp : Nat.Prime p) :
   Np n p <= L n + 1 := by
   exact le_trans (Np_le_cardK n p) (card_K_le n)
 
+/--
+For exponents in range (`2^k ≤ n`), divisibility of `n - 2^k` by `p^2`
+is equivalent to the congruence `2^k ≡ n [MOD p^2]`.
+-/
+lemma M_mod_sq_iff_two_pow_modEq {n p k : Nat} (hk : 2 ^ k <= n) :
+    (M n k) % (p ^ 2) = 0 ↔ 2 ^ k ≡ n [MOD p ^ 2] := by
+  unfold M
+  constructor
+  · intro hmod
+    exact (Nat.modEq_iff_dvd' hk).2 (Nat.dvd_of_mod_eq_zero hmod)
+  · intro hmod
+    exact Nat.mod_eq_zero_of_dvd ((Nat.modEq_iff_dvd' hk).1 hmod)
+
+/-- Unpack the `Np` filter predicate into a congruence class condition. -/
+lemma mem_Np_filter_iff_two_pow_modEq {n p k : Nat} :
+    k ∈ (K n).filter (fun t => (M n t) % (p ^ 2) = 0) ↔
+      k ∈ K n ∧ 2 ^ k ≡ n [MOD p ^ 2] := by
+  constructor
+  · intro hk
+    rcases Finset.mem_filter.mp hk with ⟨hkK, hmod⟩
+    have hkLe : 2 ^ k <= n := le_of_lt (C1 hkK)
+    exact ⟨hkK, (M_mod_sq_iff_two_pow_modEq hkLe).1 hmod⟩
+  · intro hk
+    rcases hk with ⟨hkK, hmod⟩
+    have hkLe : 2 ^ k <= n := le_of_lt (C1 hkK)
+    exact Finset.mem_filter.mpr ⟨hkK, (M_mod_sq_iff_two_pow_modEq hkLe).2 hmod⟩
+
+/--
+If two exponents yield the same residue modulo `p^2` and both target a unit class,
+then they are congruent modulo the order of `2` in `(ZMod (p^2))ˣ`.
+-/
+lemma exponents_modEq_order_of_two_unit
+    {n p k l : Nat}
+    (h2cop : Nat.Coprime 2 (p ^ 2))
+    (hncop : Nat.Coprime n (p ^ 2))
+    (hk : 2 ^ k ≡ n [MOD p ^ 2])
+    (hl : 2 ^ l ≡ n [MOD p ^ 2]) :
+    k ≡ l [MOD orderOf (ZMod.unitOfCoprime 2 h2cop)] := by
+  let u : (ZMod (p ^ 2))ˣ := ZMod.unitOfCoprime 2 h2cop
+  let v : (ZMod (p ^ 2))ˣ := ZMod.unitOfCoprime n hncop
+  have hk' : u ^ k = v := by
+    apply Units.ext
+    calc
+      ((u ^ k : (ZMod (p ^ 2))ˣ) : ZMod (p ^ 2)) = ((2 : ZMod (p ^ 2)) ^ k) := by
+        simp [u]
+      _ = (n : ZMod (p ^ 2)) := by
+        simpa [Nat.cast_pow] using (ZMod.natCast_eq_natCast_iff (2 ^ k) n (p ^ 2)).2 hk
+      _ = ((v : (ZMod (p ^ 2))ˣ) : ZMod (p ^ 2)) := by
+        simp [v]
+  have hl' : u ^ l = v := by
+    apply Units.ext
+    calc
+      ((u ^ l : (ZMod (p ^ 2))ˣ) : ZMod (p ^ 2)) = ((2 : ZMod (p ^ 2)) ^ l) := by
+        simp [u]
+      _ = (n : ZMod (p ^ 2)) := by
+        simpa [Nat.cast_pow] using (ZMod.natCast_eq_natCast_iff (2 ^ l) n (p ^ 2)).2 hl
+      _ = ((v : (ZMod (p ^ 2))ˣ) : ZMod (p ^ 2)) := by
+        simp [v]
+  have hEq : u ^ k = u ^ l := hk'.trans hl'.symm
+  exact (pow_eq_pow_iff_modEq).1 hEq
+
+/--
+For odd primes dividing `n`, the congruence `2^k ≡ n [MOD p]` is impossible.
+-/
+lemma not_two_pow_modEq_of_prime_dvd_n
+    {n p k : Nat}
+    (hp : Nat.Prime p) (hpne2 : p ≠ 2) (hpn : p ∣ n) :
+    ¬ (2 ^ k ≡ n [MOD p]) := by
+  intro hk
+  have hdivPow : p ∣ 2 ^ k := (hk.dvd_iff (dvd_refl p)).2 hpn
+  have hdiv2 : p ∣ 2 := hp.dvd_of_dvd_pow hdivPow
+  have hpEq2 : p = 2 := by
+    rcases (Nat.dvd_prime Nat.prime_two).1 hdiv2 with hp1 | hp2
+    · exact (hp.ne_one hp1).elim
+    · exact hp2
+  exact hpne2 hpEq2
+
+/--
+For odd primes dividing `n`, the stronger congruence `2^k ≡ n [MOD p^2]` is impossible.
+-/
+lemma not_two_pow_modEq_sq_of_prime_dvd_n
+    {n p k : Nat}
+    (hp : Nat.Prime p) (hpne2 : p ≠ 2) (hpn : p ∣ n) :
+    ¬ (2 ^ k ≡ n [MOD p ^ 2]) := by
+  intro hk
+  have hk2 : 2 ^ k ≡ n [MOD p * p] := by simpa [pow_two] using hk
+  have hk' : 2 ^ k ≡ n [MOD p] := Nat.ModEq.of_dvd (dvd_mul_right p p) hk2
+  exact not_two_pow_modEq_of_prime_dvd_n hp hpne2 hpn hk'
+
+/--
+Consequently, if an odd prime `p` divides `n`, then the local count at `p` is zero.
+-/
+lemma Np_eq_zero_of_prime_ne_two_dvd_n
+    {n p : Nat}
+    (hp : Nat.Prime p) (hpne2 : p ≠ 2) (hpn : p ∣ n) :
+    Np n p = 0 := by
+  unfold Np
+  apply Finset.card_eq_zero.mpr
+  exact Finset.eq_empty_iff_forall_notMem.mpr (by
+    intro k hk
+    exact not_two_pow_modEq_sq_of_prime_dvd_n hp hpne2 hpn
+      (mem_Np_filter_iff_two_pow_modEq.1 hk).2)
+
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
     (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
