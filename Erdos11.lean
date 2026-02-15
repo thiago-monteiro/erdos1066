@@ -1319,6 +1319,21 @@ def G3_sum_bound_eventually_slack (C : Nat) : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     Finset.sum (largePrimeSupport n) (fun p => Np n p) < L n - C
 
+/--
+Square-truncated large-prime sum condition:
+only the non-vacuous range `p^2 <= n` is summed.
+-/
+def G3_sumSq_bound_eventually : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    Finset.sum (largePrimeSupportSq n) (fun p => Np n p) < L n
+
+/--
+Slackened square-truncated large-prime sum condition.
+-/
+def G3_sumSq_bound_eventually_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    Finset.sum (largePrimeSupportSq n) (fun p => Np n p) < L n - C
+
 lemma G3_of_sum_bound_eventually (hSum : G3_sum_bound_eventually) :
     G3_large_prime_error := by
   rcases hSum with ⟨N, hN⟩
@@ -1333,6 +1348,21 @@ lemma G3_of_sum_bound_eventually_slack {C : Nat}
   refine ⟨N, ?_⟩
   intro n hn hodd
   exact lt_of_le_of_lt (G1_large_prime_decomp n) (hN n hn hodd)
+
+lemma G3_of_sumSq_bound_eventually (hSum : G3_sumSq_bound_eventually) :
+    G3_large_prime_error := by
+  rcases hSum with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq n) (hN n hn hodd)
+
+lemma G3_of_sumSq_bound_eventually_slack {C : Nat}
+    (hSum : G3_sumSq_bound_eventually_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSum with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq n) (hN n hn hodd)
 
 /--
 Sufficient condition for `G3_large_prime_error`:
