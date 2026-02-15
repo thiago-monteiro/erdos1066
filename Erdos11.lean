@@ -1198,6 +1198,49 @@ def G3_density (b d : Nat) : Prop :=
   exists N2 : Nat, forall n : Nat, N2 <= n -> Odd n ->
     d * (B n (z n)).card < b * L n
 
+/--
+Coarse unconditional density control for the large-prime side:
+if `d < b`, then eventually `d * |B n| < b * L n`.
+-/
+lemma G3_density_of_lt {b d : Nat} (hbd : d < b) : G3_density b d := by
+  let N : Nat := 2 ^ (d + 1)
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  have hn0 : n ≠ 0 := by
+    have hNpos : 0 < N := by
+      dsimp [N]
+      exact Nat.pow_pos (by decide : 0 < 2)
+    have hNle : 1 <= N := Nat.succ_le_of_lt hNpos
+    exact Nat.ne_of_gt (lt_of_lt_of_le Nat.zero_lt_one (le_trans hNle hn))
+  have hL_ge : d + 1 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    exact hn
+  have hB_le_K : (B n (z n)).card <= (K n).card := Finset.card_le_card (B_subset_K n (z n))
+  have hB_le_L1 : (B n (z n)).card <= L n + 1 := le_trans hB_le_K (card_K_le n)
+  have hmulB : d * (B n (z n)).card <= d * (L n + 1) := Nat.mul_le_mul_left d hB_le_L1
+  have hltDL : d * (L n + 1) < b * L n := by
+    have hdLtL : d < L n := lt_of_lt_of_le (Nat.lt_succ_self d) hL_ge
+    have hbd1 : 1 <= b - d := Nat.succ_le_of_lt (Nat.sub_pos_of_lt hbd)
+    have hgap : d < (b - d) * L n := by
+      have hmul_ge : L n <= (b - d) * L n := by
+        calc
+          L n = 1 * L n := by simp
+          _ <= (b - d) * L n := Nat.mul_le_mul_right (L n) hbd1
+      exact lt_of_lt_of_le hdLtL hmul_ge
+    have hsum :
+        d * L n + d < d * L n + (b - d) * L n :=
+      Nat.add_lt_add_left hgap (d * L n)
+    have hleft : d * (L n + 1) = d * L n + d := by
+      simp [Nat.mul_add, Nat.add_comm]
+    have hright : d * L n + (b - d) * L n = b * L n := by
+      rw [← Nat.add_mul, Nat.add_sub_of_le (Nat.le_of_lt hbd)]
+    exact hleft ▸ (lt_of_lt_of_eq hsum hright)
+  exact lt_of_le_of_lt hmulB hltDL
+
+/-- Concrete corollary used as a default large-prime density bound. -/
+lemma G3_density_two_one : G3_density 2 1 := G3_density_of_lt (by decide)
+
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
     (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
