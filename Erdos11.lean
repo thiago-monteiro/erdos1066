@@ -5955,6 +5955,130 @@ Equivalent bridge form phrased directly from `¬Erdos11Conjecture`.
 def CounterexampleBridgeNeg16673316660 : Prop :=
   ¬ Erdos11Conjecture → AsymptoticGraph.MatchedDensityBoundsScaled16673316660
 
+/--
+Analytic split package (step-1 target):
+for a fixed positive margin `Δ`, eventually both bad parts are bounded with strict
+headroom whose coefficients sum to `16673316660`.
+-/
+def AsymptoticSplitMargin16673316660 : Prop :=
+  ∃ Δ N0 : Nat, 0 < Δ ∧
+    ∀ n : Nat, N0 ≤ n → Odd n →
+      16673316660 * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        4305397883 * AsymptoticGraph.L n ∧
+      16673316660 * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        12367918777 * AsymptoticGraph.L n
+
+/--
+Step-2 contradiction: the split-margin package rules out unbounded odd counterexamples.
+-/
+lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
+    (hSplit : AsymptoticSplitMargin16673316660) :
+    ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  intro hUnbounded
+  rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
+  let N : Nat := max N0 3
+  rcases hUnbounded N with ⟨n, hnN, hodd, hNotRep⟩
+  let S : Nat := (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card
+  let B0 : Nat := (AsymptoticGraph.B n (AsymptoticGraph.z n)).card
+  let Kc : Nat := (AsymptoticGraph.K n).card
+  let Ln : Nat := AsymptoticGraph.L n
+  have hn0 : 0 < n := hodd.pos
+  have hLpos : 0 < Ln := by
+    unfold Ln AsymptoticGraph.L
+    have h2n : 2 <= n := by omega
+    exact Nat.log_pos Nat.one_lt_two h2n
+  have hn0' : N0 <= n := le_trans (le_max_left N0 3) hnN
+  rcases hSplitN n hn0' hodd with ⟨hSmallRaw, hLargeRaw⟩
+  have hSmall : 16673316660 * S + Δ * Ln <= 4305397883 * Ln := by
+    simpa [S, Ln] using hSmallRaw
+  have hLarge : 16673316660 * B0 + Δ * Ln <= 12367918777 * Ln := by
+    simpa [B0, Ln] using hLargeRaw
+  have hKminus_le_B :
+      (AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card <=
+        (AsymptoticGraph.B n (AsymptoticGraph.z n)).card := by
+    have hAeq :
+        AsymptoticGraph.A n (AsymptoticGraph.z n) =
+          AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n) :=
+      AsymptoticGraph.A_eq_K_sdiff_smallPrimeBad n (AsymptoticGraph.z n)
+    have hA_le_B :
+        (AsymptoticGraph.A n (AsymptoticGraph.z n)).card <=
+          (AsymptoticGraph.B n (AsymptoticGraph.z n)).card :=
+      AsymptoticGraph.card_A_le_card_B_of_not_represents (z0 := AsymptoticGraph.z n) hNotRep
+    simpa [hAeq] using hA_le_B
+  have hKs :
+      Kc - S <= B0 := by
+    have hcard :
+        (AsymptoticGraph.K n \ AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card =
+          (AsymptoticGraph.K n).card - (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card :=
+      Finset.card_sdiff_of_subset (AsymptoticGraph.smallPrimeBad_subset_K n (AsymptoticGraph.z n))
+    simpa [Kc, S, B0, hcard] using hKminus_le_B
+  have hK_le_SB :
+      Kc <= S + B0 := by
+    have hK_le_BS :
+        (AsymptoticGraph.K n).card <=
+          (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
+            (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card :=
+      (Nat.sub_le_iff_le_add).1 (by simpa [Kc, S, B0] using hKs)
+    simpa [Kc, S, B0, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le_BS
+  have hL_le_K : Ln <= Kc := by
+    simpa [Ln, Kc] using AsymptoticGraph.L_le_card_K_of_pos hn0
+  have hL_le_SB : Ln <= S + B0 := le_trans hL_le_K hK_le_SB
+  have hScaled : 16673316660 * Ln <= 16673316660 * (S + B0) :=
+    Nat.mul_le_mul_left 16673316660 hL_le_SB
+  have hUpper :
+      16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) <= 16673316660 * Ln := by
+    have hLeft :
+        (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) =
+          16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
+      calc
+        (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) =
+            (16673316660 * S + 16673316660 * B0) + (Δ * Ln + Δ * Ln) := by ac_rfl
+        _ = 16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
+            rw [← Nat.mul_add]
+    have hRight :
+        4305397883 * Ln + 12367918777 * Ln = 16673316660 * Ln := by
+      calc
+        4305397883 * Ln + 12367918777 * Ln = (4305397883 + 12367918777) * Ln := by
+          rw [Nat.add_mul]
+        _ = 16673316660 * Ln := by norm_num
+    calc
+      16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) =
+          (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) := by
+            symm
+            exact hLeft
+      _ <= 4305397883 * Ln + 12367918777 * Ln := Nat.add_le_add hSmall hLarge
+      _ = 16673316660 * Ln := hRight
+  have hDeltaLnPos : 0 < Δ * Ln := Nat.mul_pos hΔ hLpos
+  have hStrict :
+      16673316660 * (S + B0) <
+        16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
+    have hPos : 0 < Δ * Ln + Δ * Ln := by omega
+    exact Nat.lt_add_of_pos_right hPos
+  have hlt : 16673316660 * Ln < 16673316660 * Ln := by
+    exact lt_of_le_of_lt hScaled (lt_of_lt_of_le hStrict hUpper)
+  exact (Nat.lt_irrefl _ hlt)
+
+/--
+Bridge theorem from the analytic split package.
+-/
+lemma counterexampleBridge16673316660_of_asymptotic_split_margin16673316660
+    (hSplit : AsymptoticSplitMargin16673316660) :
+    CounterexampleBridge16673316660 := by
+  intro hUnbounded
+  exact False.elim
+    ((not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660 hSplit) hUnbounded)
+
+/--
+Unconditional closure from the analytic split package.
+-/
+lemma erdos11_of_asymptotic_split_margin16673316660
+    (hSplit : AsymptoticSplitMargin16673316660) :
+    Erdos11Conjecture := by
+  exact erdos11_of_unbounded_counterexample_bridge16673316660
+    (counterexampleBridge16673316660_of_asymptotic_split_margin16673316660 hSplit)
+
 lemma counterexampleBridgeNeg16673316660_iff :
     CounterexampleBridgeNeg16673316660 ↔ CounterexampleBridge16673316660 := by
   constructor
