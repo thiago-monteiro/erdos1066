@@ -6078,10 +6078,22 @@ lemma not_AsymptoticSplitMargin16673316660 : ¬ AsymptoticSplitMargin16673316660
     (matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660 hSplit)
 
 /--
-Step-2 contradiction: the split-margin package rules out unbounded odd counterexamples.
+Generic step-2 contradiction:
+if small/large bad parts are both eventually bounded with a shared positive margin
+and coefficients summing to `d`, unbounded odd counterexamples are impossible.
 -/
-lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
-    (hSplit : AsymptoticSplitMargin16673316660) :
+lemma not_unbounded_odd_counterexamples_of_split_margin
+    {d cSmall cLarge : Nat}
+    (hSum : cSmall + cLarge = d)
+    (hSplit :
+      ∃ Δ N0 : Nat, 0 < Δ ∧
+        ∀ n : Nat, N0 ≤ n → Odd n →
+          d * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+              Δ * AsymptoticGraph.L n <=
+            cSmall * AsymptoticGraph.L n ∧
+          d * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
+              Δ * AsymptoticGraph.L n <=
+            cLarge * AsymptoticGraph.L n) :
     ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
   intro hUnbounded
   rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
@@ -6098,9 +6110,9 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
     exact Nat.log_pos Nat.one_lt_two h2n
   have hn0' : N0 <= n := le_trans (le_max_left N0 3) hnN
   rcases hSplitN n hn0' hodd with ⟨hSmallRaw, hLargeRaw⟩
-  have hSmall : 16673316660 * S + Δ * Ln <= 4305397883 * Ln := by
+  have hSmall : d * S + Δ * Ln <= cSmall * Ln := by
     simpa [S, Ln] using hSmallRaw
-  have hLarge : 16673316660 * B0 + Δ * Ln <= 12367918777 * Ln := by
+  have hLarge : d * B0 + Δ * Ln <= cLarge * Ln := by
     simpa [B0, Ln] using hLargeRaw
   have hK_le_SB :
       Kc <= S + B0 := by
@@ -6109,40 +6121,49 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
   have hL_le_K : Ln <= Kc := by
     simpa [Ln, Kc] using AsymptoticGraph.L_le_card_K_of_pos hn0
   have hL_le_SB : Ln <= S + B0 := le_trans hL_le_K hK_le_SB
-  have hScaled : 16673316660 * Ln <= 16673316660 * (S + B0) :=
-    Nat.mul_le_mul_left 16673316660 hL_le_SB
+  have hScaled : d * Ln <= d * (S + B0) := Nat.mul_le_mul_left d hL_le_SB
   have hUpper :
-      16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) <= 16673316660 * Ln := by
+      d * (S + B0) + (Δ * Ln + Δ * Ln) <= d * Ln := by
     have hLeft :
-        (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) =
-          16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
+        (d * S + Δ * Ln) + (d * B0 + Δ * Ln) =
+          d * (S + B0) + (Δ * Ln + Δ * Ln) := by
       calc
-        (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) =
-            (16673316660 * S + 16673316660 * B0) + (Δ * Ln + Δ * Ln) := by ac_rfl
-        _ = 16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
+        (d * S + Δ * Ln) + (d * B0 + Δ * Ln) =
+            (d * S + d * B0) + (Δ * Ln + Δ * Ln) := by ac_rfl
+        _ = d * (S + B0) + (Δ * Ln + Δ * Ln) := by
             rw [← Nat.mul_add]
-    have hRight :
-        4305397883 * Ln + 12367918777 * Ln = 16673316660 * Ln := by
+    have hRight : cSmall * Ln + cLarge * Ln = d * Ln := by
       calc
-        4305397883 * Ln + 12367918777 * Ln = (4305397883 + 12367918777) * Ln := by
+        cSmall * Ln + cLarge * Ln = (cSmall + cLarge) * Ln := by
           rw [Nat.add_mul]
-        _ = 16673316660 * Ln := by norm_num
+        _ = d * Ln := by simpa [hSum]
     calc
-      16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) =
-          (16673316660 * S + Δ * Ln) + (16673316660 * B0 + Δ * Ln) := by
+      d * (S + B0) + (Δ * Ln + Δ * Ln) =
+          (d * S + Δ * Ln) + (d * B0 + Δ * Ln) := by
             symm
             exact hLeft
-      _ <= 4305397883 * Ln + 12367918777 * Ln := Nat.add_le_add hSmall hLarge
-      _ = 16673316660 * Ln := hRight
-  have hDeltaLnPos : 0 < Δ * Ln := Nat.mul_pos hΔ hLpos
+      _ <= cSmall * Ln + cLarge * Ln := Nat.add_le_add hSmall hLarge
+      _ = d * Ln := hRight
   have hStrict :
-      16673316660 * (S + B0) <
-        16673316660 * (S + B0) + (Δ * Ln + Δ * Ln) := by
-    have hPos : 0 < Δ * Ln + Δ * Ln := by omega
+      d * (S + B0) <
+        d * (S + B0) + (Δ * Ln + Δ * Ln) := by
+    have hPos : 0 < Δ * Ln + Δ * Ln := by
+      have hDeltaLnPos : 0 < Δ * Ln := Nat.mul_pos hΔ hLpos
+      omega
     exact Nat.lt_add_of_pos_right hPos
-  have hlt : 16673316660 * Ln < 16673316660 * Ln := by
+  have hlt : d * Ln < d * Ln := by
     exact lt_of_le_of_lt hScaled (lt_of_lt_of_le hStrict hUpper)
   exact (Nat.lt_irrefl _ hlt)
+
+/--
+Step-2 contradiction: the split-margin package rules out unbounded odd counterexamples.
+-/
+lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
+    (hSplit : AsymptoticSplitMargin16673316660) :
+    ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact not_unbounded_odd_counterexamples_of_split_margin
+    (d := 16673316660) (cSmall := 4305397883) (cLarge := 12367918777)
+    (by norm_num) hSplit
 
 /--
 Bridge theorem from the analytic split package.
@@ -6162,6 +6183,35 @@ lemma erdos11_of_asymptotic_split_margin16673316660
     Erdos11Conjecture := by
   exact erdos11_of_unbounded_counterexample_bridge16673316660
     (counterexampleBridge16673316660_of_asymptotic_split_margin16673316660 hSplit)
+
+/--
+Alternative split package with a one-tick shifted coefficient split.
+This keeps the same total `16673316660` while avoiding the exact threshold lock.
+-/
+def AsymptoticSplitMargin16673316660Safe : Prop :=
+  ∃ Δ N0 : Nat, 0 < Δ ∧
+    ∀ n : Nat, N0 ≤ n → Odd n →
+      16673316660 * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        4305397884 * AsymptoticGraph.L n ∧
+      16673316660 * (AsymptoticGraph.B n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        12367918776 * AsymptoticGraph.L n
+
+lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Safe
+    (hSplit : AsymptoticSplitMargin16673316660Safe) :
+    ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact not_unbounded_odd_counterexamples_of_split_margin
+    (d := 16673316660) (cSmall := 4305397884) (cLarge := 12367918776)
+    (by norm_num) hSplit
+
+lemma erdos11_of_asymptotic_split_margin16673316660Safe
+    (hSplit : AsymptoticSplitMargin16673316660Safe) :
+    Erdos11Conjecture := by
+  apply erdos11_of_unbounded_counterexample_bridge16673316660
+  intro hUnbounded
+  exact False.elim
+    ((not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Safe hSplit) hUnbounded)
 
 lemma counterexampleBridgeNeg16673316660_iff :
     CounterexampleBridgeNeg16673316660 ↔ CounterexampleBridge16673316660 := by
