@@ -428,6 +428,60 @@ lemma Np_eq_zero_of_prime_ne_two_dvd_n
     exact not_two_pow_modEq_sq_of_prime_dvd_n hp hpne2 hpn
       (mem_Np_filter_iff_two_pow_modEq.1 hk).2)
 
+/-- A congruence class in `range b` has size at most `b / r + 1`. -/
+lemma card_range_modEq_le_div_add_one {b r v : Nat} (hr : 0 < r) :
+    {x ∈ Finset.range b | x ≡ v [MOD r]}.card <= b / r + 1 := by
+  have hcount := Nat.count_modEq_card b hr v
+  rw [Nat.count_eq_card_filter_range] at hcount
+  rw [hcount]
+  by_cases hlt : v % r < b % r
+  · simp [hlt]
+  · simp [hlt]
+
+/--
+When `n` is a unit modulo `p^2`, all local solutions lie in one residue class
+modulo the order of `2`, giving a first cardinality upper bound for `Np`.
+-/
+lemma Np_le_order_class_bound
+    {n p : Nat}
+    (h2cop : Nat.Coprime 2 (p ^ 2))
+    (hncop : Nat.Coprime n (p ^ 2)) :
+    Np n p <= (L n + 1) / orderOf (ZMod.unitOfCoprime 2 h2cop) + 1 := by
+  classical
+  let T : Nat := orderOf (ZMod.unitOfCoprime 2 h2cop)
+  have hTpos : 0 < T := by
+    dsimp [T]
+    exact orderOf_pos (ZMod.unitOfCoprime 2 h2cop)
+  let S : Finset Nat := (K n).filter (fun t => (M n t) % (p ^ 2) = 0)
+  have hNp : Np n p = S.card := by
+    unfold Np
+    simp [S]
+  rw [hNp]
+  by_cases hsempty : S = ∅
+  · rw [hsempty]
+    simp
+  · rcases Finset.nonempty_iff_ne_empty.mpr hsempty with ⟨k0, hk0S⟩
+    have hk0mod : 2 ^ k0 ≡ n [MOD p ^ 2] := (mem_Np_filter_iff_two_pow_modEq.1 hk0S).2
+    have hsubset :
+        S ⊆ {x ∈ Finset.range (L n + 1) | x ≡ k0 [MOD T]} := by
+      intro k hkS
+      have hkK : k ∈ K n := (Finset.mem_filter.mp hkS).1
+      have hkmod : 2 ^ k ≡ n [MOD p ^ 2] := (mem_Np_filter_iff_two_pow_modEq.1 hkS).2
+      have hkT : k ≡ k0 [MOD T] := by
+        dsimp [T]
+        exact exponents_modEq_order_of_two_unit h2cop hncop hkmod hk0mod
+      have hkLt : k < L n + 1 := by
+        unfold K candidateExponents at hkK
+        exact Finset.mem_range.mp (Finset.mem_filter.mp hkK).1
+      exact Finset.mem_filter.mpr ⟨Finset.mem_range.mpr hkLt, hkT⟩
+    have hcard1 :
+        S.card <= {x ∈ Finset.range (L n + 1) | x ≡ k0 [MOD T]}.card :=
+      Finset.card_le_card hsubset
+    have hcard2 :
+        {x ∈ Finset.range (L n + 1) | x ≡ k0 [MOD T]}.card <= (L n + 1) / T + 1 :=
+      card_range_modEq_le_div_add_one hTpos
+    exact le_trans hcard1 (by simpa [T] using hcard2)
+
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
     (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
