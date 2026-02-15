@@ -305,6 +305,14 @@ noncomputable def largePrimeSupport (n : Nat) : Finset Nat := by
   classical
   exact (Finset.Icc (z n + 1) n).filter Nat.Prime
 
+/--
+Large-prime support truncated to the non-vacuous square range `p^2 <= n`.
+For `p^2 > n`, the local condition `(n - 2^k) % p^2 = 0` is impossible on `K n`.
+-/
+noncomputable def largePrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupport n).filter (fun p => p ^ 2 <= n)
+
 /-- Size bound for the exponent window. -/
 lemma card_K_le (n : Nat) : (K n).card <= L n + 1 := by
   unfold K L candidateExponents
@@ -428,6 +436,29 @@ lemma Np_eq_zero_of_prime_ne_two_dvd_n
     exact not_two_pow_modEq_sq_of_prime_dvd_n hp hpne2 hpn
       (mem_Np_filter_iff_two_pow_modEq.1 hk).2)
 
+/--
+If `p^2 > n`, then no exponent `k ∈ K n` can satisfy `(M n k) % p^2 = 0`,
+so the local count is zero.
+-/
+lemma Np_eq_zero_of_sq_gt {n p : Nat} (hgt : n < p ^ 2) :
+    Np n p = 0 := by
+  unfold Np
+  apply Finset.card_eq_zero.mpr
+  exact Finset.eq_empty_iff_forall_notMem.mpr (by
+    intro k hk
+    have hkK : k ∈ K n := (Finset.mem_filter.mp hk).1
+    have hmod0 : (M n k) % (p ^ 2) = 0 := (Finset.mem_filter.mp hk).2
+    have hklt : 2 ^ k < n := C1 hkK
+    have hmPos : 0 < M n k := by
+      unfold M
+      exact Nat.sub_pos_of_lt hklt
+    have hmLe : M n k <= n := Nat.sub_le _ _
+    have hmLt : M n k < p ^ 2 := lt_of_le_of_lt hmLe hgt
+    have hmZero : M n k = 0 := by
+      have hmodEq : (M n k) % (p ^ 2) = M n k := Nat.mod_eq_of_lt hmLt
+      simpa [hmodEq] using hmod0
+    exact (Nat.ne_of_gt hmPos) hmZero)
+
 /-- A congruence class in `range b` has size at most `b / r + 1`. -/
 lemma card_range_modEq_le_div_add_one {b r v : Nat} (hr : 0 < r) :
     {x ∈ Finset.range b | x ≡ v [MOD r]}.card <= b / r + 1 := by
@@ -534,6 +565,40 @@ lemma twoOrderSq_pos (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
   unfold twoOrderSq
   exact orderOf_pos _
 
+lemma twoOrderSq_ge_two (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    2 <= twoOrderSq p hp hpne2 := by
+  unfold twoOrderSq
+  let u : (ZMod (p ^ 2))ˣ :=
+    ZMod.unitOfCoprime 2
+      ((Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+        (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+          intro hdiv
+          rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+          · exact hp.ne_one h1
+          · exact hpne2 h2)).symm))
+  have huPos : 0 < orderOf u := orderOf_pos u
+  have huNeOne : u ≠ 1 := by
+    intro hu1
+    have hcast : ((2 : ZMod (p ^ 2)) : ZMod (p ^ 2)) = (1 : ZMod (p ^ 2)) := by
+      exact by simpa [u] using congrArg (fun x : (ZMod (p ^ 2))ˣ => (x : ZMod (p ^ 2))) hu1
+    have honez : ((1 : Nat) : ZMod (p ^ 2)) = 0 := by
+      calc
+        ((1 : Nat) : ZMod (p ^ 2)) = (2 : ZMod (p ^ 2)) - 1 := by norm_num
+        _ = (1 : ZMod (p ^ 2)) - 1 := by simp [hcast]
+        _ = 0 := by simp
+    have hdiv1 : p ^ 2 ∣ 1 := (ZMod.natCast_eq_zero_iff 1 (p ^ 2)).1 honez
+    have hp_le_sq : p <= p ^ 2 := by
+      calc
+        p = p * 1 := by simp
+        _ <= p * p := Nat.mul_le_mul_left p (Nat.succ_le_of_lt hp.pos)
+        _ = p ^ 2 := by simp [pow_two]
+    have hsqNeOne : p ^ 2 ≠ 1 := Nat.ne_of_gt (lt_of_lt_of_le hp.one_lt hp_le_sq)
+    exact hsqNeOne (Nat.dvd_one.mp hdiv1)
+  have hordNeOne : orderOf u ≠ 1 := by
+    intro hord1
+    exact huNeOne ((orderOf_eq_one_iff).1 hord1)
+  exact (Nat.two_le_iff (orderOf u)).2 ⟨Nat.ne_of_gt huPos, hordNeOne⟩
+
 lemma Np_le_order_class_bound_of_prime_ne_two'
     {n p : Nat}
     (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
@@ -595,6 +660,122 @@ lemma Np_le_localOrderBound_of_largePrimeSupport (n p : Nat)
   have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
   unfold localOrderBound
   simpa [hp] using Np_le_largePrimeSupport_piecewise n p hpS
+
+lemma localOrderBound_le_L_add_one_of_prime {n p : Nat} (hp : Nat.Prime p) :
+    localOrderBound n p <= L n + 1 := by
+  unfold localOrderBound
+  have hprime :
+      (if hp' : Nat.Prime p then
+          if hp2 : p = 2 then
+            L n + 1
+          else
+            (L n + 1) / twoOrderSq p hp' hp2 + 1
+        else
+          L n + 1) =
+        (if hp2 : p = 2 then
+          L n + 1
+        else
+          (L n + 1) / twoOrderSq p hp hp2 + 1) := by
+    simp [hp]
+  rw [hprime]
+  by_cases hp2 : p = 2
+  · simp [hp2]
+  · have hOrd2 : 2 <= twoOrderSq p hp hp2 := twoOrderSq_ge_two p hp hp2
+    have hdiv :
+        (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / 2 :=
+      Nat.div_le_div_left hOrd2 (by decide : 0 < 2)
+    have hhalf : (L n + 1) / 2 <= L n := by
+      omega
+    simpa [hp2] using (le_trans hdiv hhalf)
+
+lemma sum_localOrderBound_small_le (n : Nat) :
+    Finset.sum (smallPrimeSupport n) (fun p => localOrderBound n p) <=
+      (smallPrimeSupport n).card * (L n + 1) := by
+  calc
+    Finset.sum (smallPrimeSupport n) (fun p => localOrderBound n p) <=
+        Finset.sum (smallPrimeSupport n) (fun _ => L n + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            exact localOrderBound_le_L_add_one_of_prime ((Finset.mem_filter.mp hpS).2))
+    _ = (smallPrimeSupport n).card * (L n + 1) := by simp
+
+lemma sum_localOrderBound_large_le (n : Nat) :
+    Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) <=
+      (largePrimeSupport n).card * (L n + 1) := by
+  calc
+    Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) <=
+        Finset.sum (largePrimeSupport n) (fun _ => L n + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            exact localOrderBound_le_L_add_one_of_prime ((Finset.mem_filter.mp hpS).2))
+    _ = (largePrimeSupport n).card * (L n + 1) := by simp
+
+lemma sum_localOrderBound_largeSq_le (n : Nat) :
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (largePrimeSupportSq n).card * (L n + 1) := by
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (largePrimeSupportSq n) (fun _ => L n + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpS).1
+            exact localOrderBound_le_L_add_one_of_prime ((Finset.mem_filter.mp hpLarge).2))
+    _ = (largePrimeSupportSq n).card * (L n + 1) := by simp
+
+lemma localOrderBound_le_half_add_one_of_prime_ne_two {n p : Nat}
+    (hp : Nat.Prime p) (hp2 : p ≠ 2) :
+    localOrderBound n p <= (L n + 1) / 2 + 1 := by
+  have hdiv :
+      (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / 2 :=
+    Nat.div_le_div_left (twoOrderSq_ge_two p hp hp2) (by decide : 0 < 2)
+  have hdiv1 :
+      (L n + 1) / twoOrderSq p hp hp2 + 1 <= (L n + 1) / 2 + 1 :=
+    Nat.add_le_add_right hdiv 1
+  unfold localOrderBound
+  simpa [hp, hp2] using hdiv1
+
+lemma prime_ne_two_of_mem_largePrimeSupport {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupport n) :
+    p ≠ 2 := by
+  have hpLow : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpS).1).1
+  intro hp2
+  have h3le : 3 <= p := le_trans (Nat.succ_le_succ hz2) hpLow
+  have h3le2 : 3 <= 2 := hp2 ▸ h3le
+  exact Nat.not_succ_le_self 2 h3le2
+
+lemma localOrderBound_le_half_add_one_of_largePrimeSupport {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupport n) :
+    localOrderBound n p <= (L n + 1) / 2 + 1 := by
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpS
+  exact localOrderBound_le_half_add_one_of_prime_ne_two hp hp2
+
+lemma localOrderBound_le_half_add_one_of_largePrimeSupportSq {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupportSq n) :
+    localOrderBound n p <= (L n + 1) / 2 + 1 := by
+  exact localOrderBound_le_half_add_one_of_largePrimeSupport hz2 ((Finset.mem_filter.mp hpS).1)
+
+lemma sum_localOrderBound_large_le_half_add_one (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) <=
+      (largePrimeSupport n).card * ((L n + 1) / 2 + 1) := by
+  calc
+    Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) <=
+        Finset.sum (largePrimeSupport n) (fun _ => (L n + 1) / 2 + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            exact localOrderBound_le_half_add_one_of_largePrimeSupport hz2 hpS)
+    _ = (largePrimeSupport n).card * ((L n + 1) / 2 + 1) := by simp
+
+lemma sum_localOrderBound_largeSq_le_half_add_one (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (largePrimeSupportSq n) (fun _ => (L n + 1) / 2 + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpS)
+    _ = (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by simp
 
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
@@ -916,6 +1097,10 @@ lemma S1_small_prime_decomp_localOrder (n : Nat) :
         intro p hp
         exact Np_le_localOrderBound_of_smallPrimeSupport n p hp)
 
+lemma S1_small_prime_decomp_localOrder_coarse (n : Nat) :
+    (smallPrimeBad n (z n)).card <= (smallPrimeSupport n).card * (L n + 1) := by
+  exact le_trans (S1_small_prime_decomp_localOrder n) (sum_localOrderBound_small_le n)
+
 /--
 Sufficient condition for `S1_small_prime_sieve`:
 eventually, the small-prime local-count sum is bounded by `|K n| - L n`.
@@ -987,6 +1172,48 @@ lemma G1_large_prime_decomp (n : Nat) :
     _ = Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
       simp [Np, badAt]
 
+/--
+Sharper large-prime decomposition:
+only primes with `p^2 <= n` can contribute to `B`.
+-/
+lemma G1_large_prime_decomp_sq (n : Nat) :
+  (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+  classical
+  let badAt : Nat -> Finset Nat := fun p => (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
+  have hsubset :
+      B n (z n) ⊆ (largePrimeSupportSq n).biUnion badAt := by
+    intro k hkB
+    have hkK : k ∈ K n := (Finset.mem_filter.mp hkB).1
+    rcases (Finset.mem_filter.mp hkB).2 with ⟨p, hp, hpgt, hmod0⟩
+    have hklt : 2 ^ k < n := C1 hkK
+    have hmPos : 0 < M n k := by
+      unfold M
+      exact Nat.sub_pos_of_lt hklt
+    have hp2dvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 hmod0
+    have hp2_le_m : p ^ 2 <= M n k := Nat.le_of_dvd hmPos hp2dvd
+    have hp2_le_n : p ^ 2 <= n := le_trans hp2_le_m (Nat.sub_le n (2 ^ k))
+    have hp_le_sq : p <= p ^ 2 := by
+      calc
+        p = p * 1 := by simp
+        _ <= p * p := Nat.mul_le_mul_left p (Nat.succ_le_of_lt hp.pos)
+        _ = p ^ 2 := by simp [pow_two]
+    have hp_le_n : p <= n := le_trans hp_le_sq hp2_le_n
+    have hpIcc : p ∈ Finset.Icc (z n + 1) n := Finset.mem_Icc.mpr
+      ⟨Nat.succ_le_of_lt hpgt, hp_le_n⟩
+    have hpLarge : p ∈ largePrimeSupport n := by
+      unfold largePrimeSupport
+      exact Finset.mem_filter.mpr ⟨hpIcc, hp⟩
+    have hpSq : p ∈ largePrimeSupportSq n := by
+      unfold largePrimeSupportSq
+      exact Finset.mem_filter.mpr ⟨hpLarge, hp2_le_n⟩
+    have hkBadAt : k ∈ badAt p := Finset.mem_filter.mpr ⟨hkK, hmod0⟩
+    exact Finset.mem_biUnion.mpr ⟨p, hpSq, hkBadAt⟩
+  calc
+    (B n (z n)).card <= ((largePrimeSupportSq n).biUnion badAt).card := Finset.card_le_card hsubset
+    _ <= Finset.sum (largePrimeSupportSq n) (fun p => (badAt p).card) := Finset.card_biUnion_le
+    _ = Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      simp [Np, badAt]
+
 lemma G1_large_prime_decomp_localOrder (n : Nat) :
     (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) := by
   calc
@@ -996,6 +1223,34 @@ lemma G1_large_prime_decomp_localOrder (n : Nat) :
       exact Finset.sum_le_sum (by
         intro p hp
         exact Np_le_localOrderBound_of_largePrimeSupport n p hp)
+
+lemma G1_large_prime_decomp_localOrder_coarse (n : Nat) :
+    (B n (z n)).card <= (largePrimeSupport n).card * (L n + 1) := by
+  exact le_trans (G1_large_prime_decomp_localOrder n) (sum_localOrderBound_large_le n)
+
+lemma G1_large_prime_decomp_localOrder_half (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <= (largePrimeSupport n).card * ((L n + 1) / 2 + 1) := by
+  exact le_trans (G1_large_prime_decomp_localOrder n)
+    (sum_localOrderBound_large_le_half_add_one n hz2)
+
+lemma G1_large_prime_decomp_sq_localOrder (n : Nat) :
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) := by
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) :=
+      G1_large_prime_decomp_sq n
+    _ <= Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) := by
+      exact Finset.sum_le_sum (by
+        intro p hp
+        exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hp).1))
+
+lemma G1_large_prime_decomp_sq_localOrder_coarse (n : Nat) :
+    (B n (z n)).card <= (largePrimeSupportSq n).card * (L n + 1) := by
+  exact le_trans (G1_large_prime_decomp_sq_localOrder n) (sum_localOrderBound_largeSq_le n)
+
+lemma G1_large_prime_decomp_sq_localOrder_half (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <= (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by
+  exact le_trans (G1_large_prime_decomp_sq_localOrder n)
+    (sum_localOrderBound_largeSq_le_half_add_one n hz2)
 
 /-- G2 (coarse form): summing local bounds over large-prime support. -/
 lemma G2_large_prime_via_local (n : Nat) :
@@ -1009,6 +1264,20 @@ lemma G2_large_prime_via_local (n : Nat) :
         Finset.sum (largePrimeSupport n) (fun _ => L n + 1) := by
           exact Finset.sum_le_sum hpoint
     _ = (largePrimeSupport n).card * (L n + 1) := by
+          simp
+
+/-- G2 (square-range coarse form): same bound over `largePrimeSupportSq`. -/
+lemma G2_large_prime_via_local_sq (n : Nat) :
+  Finset.sum (largePrimeSupportSq n) (fun p => Np n p) <=
+    (largePrimeSupportSq n).card * (L n + 1) := by
+  have hpoint : ∀ p ∈ largePrimeSupportSq n, Np n p <= L n + 1 := by
+    intro p hp
+    exact L2_local_periodic n p ((Finset.mem_filter.mp ((Finset.mem_filter.mp hp).1)).2)
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => Np n p) <=
+        Finset.sum (largePrimeSupportSq n) (fun _ => L n + 1) := by
+          exact Finset.sum_le_sum hpoint
+    _ = (largePrimeSupportSq n).card * (L n + 1) := by
           simp
 
 /-- G3: strict asymptotic control for large-prime contamination (analytic input). -/
@@ -1265,6 +1534,32 @@ def G3_support_bound_eventually_slack (C : Nat) : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     (largePrimeSupport n).card * (L n + 1) < L n - C
 
+/--
+Improved support-size condition using the order-based half-factor:
+for `z n >= 2`, every large prime is odd, so each local term is at most
+`(L n + 1) / 2 + 1`.
+-/
+def G3_support_bound_eventually_half : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeSupport n).card * ((L n + 1) / 2 + 1) < L n
+
+/--
+Square-truncated variant of the support-size condition, still with the
+order-based half-factor.
+-/
+def G3_supportSq_bound_eventually_half : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) < L n
+
+lemma two_le_z_of_sixteen_le {n : Nat} (hn : 16 <= n) : 2 <= z n := by
+  have hn0 : n ≠ 0 := Nat.ne_of_gt (lt_of_lt_of_le (by decide : 0 < 16) hn)
+  have hlog4 : 4 <= L n := by
+    unfold L
+    refine (Nat.le_log_iff_pow_le Nat.one_lt_two hn0).2 ?_
+    simpa using hn
+  unfold z
+  omega
+
 lemma G3_of_support_bound_eventually (hSupp : G3_support_bound_eventually) :
     G3_large_prime_error := by
   rcases hSupp with ⟨N, hN⟩
@@ -1281,6 +1576,27 @@ lemma G3_of_support_bound_eventually_slack {C : Nat}
   intro n hn hodd
   exact lt_of_le_of_lt (le_trans (G1_large_prime_decomp n) (G2_large_prime_via_local n))
     (hN n hn hodd)
+
+lemma G3_of_support_bound_eventually_half (hSupp : G3_support_bound_eventually_half) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_localOrder_half n hz2) (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_half
+    (hSupp : G3_supportSq_bound_eventually_half) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_half n hz2) (hN n hnN hodd)
 
 /-- F1 (slack form): positive survivor count from matched slack assumptions. -/
 lemma F1_positive_survivors_slack {C : Nat}
