@@ -5804,5 +5804,22 @@ lemma T0_of_matched_density_bounds (h : MatchedDensityBounds) :
 
 end AsymptoticGraph
 
-end Erdos11
+/--
+Main conditional asymptotic statement provided by this file:
+if matched density bounds hold, then Erdős #11 holds asymptotically.
+-/
+lemma erdos11_conditional_asymptotic
+    (h : AsymptoticGraph.MatchedDensityBounds) : Erdos11Conjecture := by
+  exact AsymptoticGraph.T0_of_matched_density_bounds h
 
+/--
+Equivalent expanded form of the conditional asymptotic route.
+-/
+lemma erdos11_conditional_asymptotic_explicit {a b d : Nat}
+    (hab : b < a)
+    (hS1 : AsymptoticGraph.S1_density a d)
+    (hG3 : AsymptoticGraph.G3_density b d) :
+    Erdos11Conjecture := by
+  exact AsymptoticGraph.T0_erdos11_from_density_assumptions hab hS1 hG3
+
+end Erdos11
