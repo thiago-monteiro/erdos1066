@@ -469,6 +469,71 @@ lemma card_range_modEq_le_div_add_one {b r v : Nat} (hr : 0 < r) :
   · simp [hlt]
   · simp [hlt]
 
+/-- A residue class in `range b` has size at least `b / r`. -/
+lemma card_range_modEq_ge_div {b r v : Nat} (hr : 0 < r) :
+    b / r <= {x ∈ Finset.range b | x ≡ v [MOD r]}.card := by
+  have hcount := Nat.count_modEq_card b hr v
+  rw [Nat.count_eq_card_filter_range] at hcount
+  rw [hcount]
+  by_cases hlt : v % r < b % r
+  · simp [hlt]
+  · simp [hlt]
+
+lemma six_mul_sub_div_six_le (m : Nat) :
+    6 * (m + 1 - m / 6) <= 5 * m + 11 := by
+  let q : Nat := m / 6
+  let r : Nat := m % 6
+  have hrlt : r < 6 := by
+    dsimp [r]
+    exact Nat.mod_lt _ (by decide : 0 < 6)
+  have hm : m = r + 6 * q := by
+    dsimp [r, q]
+    exact (Nat.mod_add_div m 6).symm
+  have hdiv : (r + 6 * q) / 6 = q := by
+    calc
+      (r + 6 * q) / 6 = r / 6 + q := by
+        simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using
+          Nat.add_mul_div_left r q (by decide : 0 < 6)
+      _ = q := by
+        simp [Nat.div_eq_of_lt hrlt]
+  rw [hm, hdiv]
+  omega
+
+lemma d_mul_fiveL_add11_lt_six_mul_aL {a d L0 : Nat}
+    (hRate : 5 * d < 6 * a) (hL : 11 * d + 1 <= L0) :
+    d * (5 * L0 + 11) < 6 * (a * L0) := by
+  have hdeltaPos : 0 < 6 * a - 5 * d := Nat.sub_pos_of_lt hRate
+  have hdeltaGe1 : 1 <= 6 * a - 5 * d := Nat.succ_le_of_lt hdeltaPos
+  have hLm : 11 * d + 1 <= (6 * a - 5 * d) * L0 := by
+    have hmul : L0 <= (6 * a - 5 * d) * L0 := by
+      calc
+        L0 = 1 * L0 := by simp
+        _ <= (6 * a - 5 * d) * L0 := Nat.mul_le_mul_right L0 hdeltaGe1
+    exact le_trans hL hmul
+  have h11lt : 11 * d < (6 * a - 5 * d) * L0 := by
+    exact lt_of_lt_of_le (Nat.lt_succ_self (11 * d)) hLm
+  have hsum :
+      5 * (d * L0) + 11 * d < 5 * (d * L0) + (6 * a - 5 * d) * L0 := by
+    exact Nat.add_lt_add_left h11lt (5 * (d * L0))
+  have hleft :
+      d * (5 * L0 + 11) = 5 * (d * L0) + 11 * d := by
+    calc
+      d * (5 * L0 + 11) = d * (5 * L0) + d * 11 := by rw [Nat.mul_add]
+      _ = 5 * (d * L0) + 11 * d := by
+        simp [Nat.mul_assoc, Nat.mul_comm]
+  have hright :
+      5 * (d * L0) + (6 * a - 5 * d) * L0 = 6 * (a * L0) := by
+    calc
+      5 * (d * L0) + (6 * a - 5 * d) * L0 =
+          (5 * d) * L0 + (6 * a - 5 * d) * L0 := by
+            simp [Nat.mul_assoc]
+      _ = ((5 * d) + (6 * a - 5 * d)) * L0 := by rw [Nat.add_mul]
+      _ = (6 * a) * L0 := by
+            simp [Nat.add_sub_of_le (Nat.le_of_lt hRate)]
+      _ = 6 * (a * L0) := by
+            simp [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
+  exact hleft ▸ (lt_of_lt_of_eq hsum hright)
+
 /--
 When `n` is a unit modulo `p^2`, all local solutions lie in one residue class
 modulo the order of `2`, giving a first cardinality upper bound for `Np`.
@@ -844,6 +909,52 @@ lemma k_not_mem_A_of_mod9_class {n k : Nat}
       omega
     simpa [pow_two] using this
   exact hsmall 3 (by decide) hz3 hmod0
+
+lemma mod9_class_one_range_subset_K_sdiff_A {n : Nat}
+    (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) :
+    {k ∈ Finset.range (L n) | k ≡ 1 [MOD 6]} ⊆ K n \ A n (z n) := by
+  classical
+  intro k hk
+  have hkRange : k ∈ Finset.range (L n) := (Finset.mem_filter.mp hk).1
+  have hkLt : k < L n := Finset.mem_range.mp hkRange
+  have hkModEq : k ≡ 1 [MOD 6] := (Finset.mem_filter.mp hk).2
+  have hkmod : k % 6 = 1 := by
+    simpa [Nat.ModEq] using hkModEq
+  have hkPow : 2 ^ k < n := by
+    unfold L at hkLt
+    have hpow : 2 ^ k < 2 ^ Nat.log 2 n := Nat.pow_lt_pow_right Nat.one_lt_two hkLt
+    have hle : 2 ^ Nat.log 2 n <= n := Nat.pow_log_le_self 2 hn0
+    exact lt_of_lt_of_le hpow hle
+  have hkK : k ∈ K n := mem_K_of_pow_lt hn0 hkPow
+  have hkNotA : k ∉ A n (z n) := k_not_mem_A_of_mod9_class hz3 hmod9 hkmod
+  exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
+
+lemma card_A_le_L_add_one_sub_div_six_of_mod9 {n : Nat}
+    (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) :
+    (A n (z n)).card <= L n + 1 - L n / 6 := by
+  classical
+  let S6 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 1 [MOD 6]}
+  have hS6sub : S6 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod9_class_one_range_subset_K_sdiff_A hn0 hz3 hmod9 (by simpa [S6] using hk)
+  have hS6card : L n / 6 <= S6.card := by
+    have hcard :=
+      card_range_modEq_ge_div (b := L n) (r := 6) (v := 1) (by decide : 0 < 6)
+    simpa [S6] using hcard
+  have hLower : L n / 6 <= (K n \ A n (z n)).card := le_trans hS6card (Finset.card_le_card hS6sub)
+  have hAdd :
+      (L n / 6) + (A n (z n)).card <= (K n).card := by
+    have h1 : (L n / 6) + (A n (z n)).card <=
+        (K n \ A n (z n)).card + (A n (z n)).card := Nat.add_le_add_right hLower _
+    have h2 : (K n \ A n (z n)).card + (A n (z n)).card = (K n).card :=
+      Finset.card_sdiff_add_card_eq_card (A_subset_K n (z n))
+    exact le_trans h1 (by simp [h2])
+  have hAdd' : (A n (z n)).card + (L n / 6) <= (K n).card := by
+    simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hAdd
+  have hA_le_K : (A n (z n)).card <= (K n).card - L n / 6 := Nat.le_sub_of_add_le hAdd'
+  calc
+    (A n (z n)).card <= (K n).card - L n / 6 := hA_le_K
+    _ <= (L n + 1) - L n / 6 := Nat.sub_le_sub_right (card_K_le n) (L n / 6)
 
 lemma card_A_le_card_K_sub_two {n z0 : Nat}
     (h0K : 0 ∈ K n) (h1K : 1 ∈ K n)
@@ -1725,10 +1836,82 @@ lemma not_S1_density_of_lt {a d : Nat} (hda : d < a) : ¬ S1_density a d := by
     exact hleft ▸ (lt_of_lt_of_eq hsum hright)
   exact (Nat.not_le_of_gt hstrict) hupper
 
+lemma not_S1_density_of_five_mul_lt_six_mul {a d : Nat}
+    (hRate : 5 * d < 6 * a) : ¬ S1_density a d := by
+  intro hS1
+  rcases hS1 with ⟨N1, hN1⟩
+  let t : Nat := max N1 (2 ^ (11 * d + 1))
+  let n : Nat := 65 + 36 * t
+  have hnN : N1 <= n := by
+    dsimp [n, t]
+    omega
+  have hodd : Odd n := by
+    dsimp [n]
+    refine ⟨32 + 18 * t, ?_⟩
+    omega
+  have hbound : a * L n <= d * (A n (z n)).card := hN1 n hnN hodd
+  have hn0 : n ≠ 0 := by
+    dsimp [n]
+    omega
+  have hL6 : 6 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    dsimp [n]
+    omega
+  have hz3 : 3 <= z n := by
+    unfold z
+    omega
+  have hmod9 : n % 9 = 2 := by
+    dsimp [n]
+    omega
+  have hAub : (A n (z n)).card <= L n + 1 - L n / 6 :=
+    card_A_le_L_add_one_sub_div_six_of_mod9 hn0 hz3 hmod9
+  have hLbig : 11 * d + 1 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    have ht : 2 ^ (11 * d + 1) <= t := by
+      dsimp [t]
+      exact le_max_right N1 (2 ^ (11 * d + 1))
+    have ht_le_n : t <= n := by
+      dsimp [n]
+      omega
+    exact le_trans ht ht_le_n
+  have hmul : d * (A n (z n)).card <= d * (L n + 1 - L n / 6) := Nat.mul_le_mul_left d hAub
+  have hmul6 : 6 * (d * (A n (z n)).card) <= 6 * (d * (L n + 1 - L n / 6)) :=
+    Nat.mul_le_mul_left 6 hmul
+  have hcore : 6 * (L n + 1 - L n / 6) <= 5 * L n + 11 := six_mul_sub_div_six_le (L n)
+  have hcoreMul : d * (6 * (L n + 1 - L n / 6)) <= d * (5 * L n + 11) :=
+    Nat.mul_le_mul_left d hcore
+  have hAupper6 : 6 * (d * (A n (z n)).card) <= d * (5 * L n + 11) := by
+    have hmul6' : 6 * (d * (A n (z n)).card) <= d * (6 * (L n + 1 - L n / 6)) := by
+      simpa [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm] using hmul6
+    exact le_trans hmul6' hcoreMul
+  have hbound6 : 6 * (a * L n) <= 6 * (d * (A n (z n)).card) := Nat.mul_le_mul_left 6 hbound
+  have hcontr : 6 * (a * L n) <= d * (5 * L n + 11) := le_trans hbound6 hAupper6
+  have hstrict : d * (5 * L n + 11) < 6 * (a * L n) :=
+    d_mul_fiveL_add11_lt_six_mul_aL hRate hLbig
+  exact (Nat.not_le_of_gt hstrict) hcontr
+
+lemma not_S1_density_of_le_pos {a d : Nat} (ha : 0 < a) (hda : d <= a) :
+    ¬ S1_density a d := by
+  have h5da : 5 * d <= 5 * a := Nat.mul_le_mul_left 5 hda
+  have h5a_lt_6a : 5 * a < 6 * a := by
+    calc
+      5 * a < 5 * a + a := Nat.lt_add_of_pos_right ha
+      _ = 6 * a := by omega
+  exact not_S1_density_of_five_mul_lt_six_mul (lt_of_le_of_lt h5da h5a_lt_6a)
+
 lemma S1_density_implies_a_le_d {a d : Nat} (hS1 : S1_density a d) : a <= d := by
   by_cases had : a <= d
   · exact had
   · exact False.elim ((not_S1_density_of_lt (lt_of_not_ge had)) hS1)
+
+lemma S1_density_implies_a_lt_d_of_pos {a d : Nat}
+    (ha : 0 < a) (hS1 : S1_density a d) : a < d := by
+  have hnot : ¬ d <= a := by
+    intro hda
+    exact (not_S1_density_of_le_pos ha hda) hS1
+  exact lt_of_not_ge hnot
 
 /--
 Density-form large-prime bound:
@@ -1797,6 +1980,13 @@ lemma density_pair_implies_b_le_d {a b d : Nat}
   · exact hbd
   · have hdb : d < b := lt_of_not_ge hbd
     exact False.elim ((not_density_pair_of_lt_lt hdb hba) ⟨hS1, hG3⟩)
+
+lemma density_pair_implies_chain {a b d : Nat}
+    (hba : b < a) (hS1 : S1_density a d) (_hG3 : G3_density b d) :
+    b < a ∧ a < d := by
+  refine ⟨hba, ?_⟩
+  have ha : 0 < a := lt_of_le_of_lt (Nat.zero_le b) hba
+  exact S1_density_implies_a_lt_d_of_pos ha hS1
 
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
@@ -1971,6 +2161,11 @@ lemma matchedDensityBounds_implies_b_le_d (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ b <= d /\ S1_density a d /\ G3_density b d := by
   rcases h with ⟨a, b, d, hba, hS1, hG3⟩
   exact ⟨a, b, d, hba, density_pair_implies_b_le_d hba hS1 hG3, hS1, hG3⟩
+
+lemma matchedDensityBounds_implies_chain (h : MatchedDensityBounds) :
+    exists a b d : Nat, b < a /\ a < d /\ S1_density a d /\ G3_density b d := by
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  exact ⟨a, b, d, hba, (density_pair_implies_chain hba hS1 hG3).2, hS1, hG3⟩
 
 lemma T0_of_matched_density_bounds (h : MatchedDensityBounds) :
     Erdos11Conjecture := by
