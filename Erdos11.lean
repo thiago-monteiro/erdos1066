@@ -104,7 +104,7 @@ lemma solver_sound {n m k : Nat} (h : solver? n = some (m, k)) :
       exact ⟨Nat.sub_pos_of_lt hgood.1, hgood.2,
         (Nat.sub_add_cancel (le_of_lt hgood.1)).symm⟩
 
-theorem represents_of_solver_eq_some {n m k : Nat} (h : solver? n = some (m, k)) :
+lemma represents_of_solver_eq_some {n m k : Nat} (h : solver? n = some (m, k)) :
     Represents n := by
   rcases solver_sound h with ⟨hm, hsq, hsum⟩
   exact ⟨m, k, hm, hsq, hsum⟩
@@ -138,7 +138,7 @@ lemma mem_oddCandidates_of_bounds {B n : Nat}
   have hprop : 3 <= n ∧ Odd n := ⟨h3, hodd⟩
   simpa [Bool.decide_eq_true] using hprop
 
-theorem verifiedUpTo_of_solverSucceedsUpTo (B : Nat) (h : solverSucceedsUpTo B = true) :
+lemma verifiedUpTo_of_solverSucceedsUpTo (B : Nat) (h : solverSucceedsUpTo B = true) :
     VerifiedUpTo B := by
   intro n h3 hB hodd
   exact represents_of_findExponent_isSome
@@ -148,14 +148,14 @@ theorem verifiedUpTo_of_solverSucceedsUpTo (B : Nat) (h : solverSucceedsUpTo B =
 Executable finite verification result:
 the solver is certified for every odd `n` with `3 <= n <= 2^20`.
 -/
-theorem solverSucceedsUpTo_2pow20 : solverSucceedsUpTo (2 ^ 20) = true := by
+lemma solverSucceedsUpTo_2pow20 : solverSucceedsUpTo (2 ^ 20) = true := by
   native_decide
 
 /--
 Formal finite theorem:
 for every odd `n` with `3 <= n <= 2^20`, `Represents n` holds.
 -/
-theorem verifiedUpTo_2pow20 : VerifiedUpTo (2 ^ 20) :=
+lemma verifiedUpTo_2pow20 : VerifiedUpTo (2 ^ 20) :=
   verifiedUpTo_of_solverSucceedsUpTo (2 ^ 20) solverSucceedsUpTo_2pow20
 
 namespace AsymptoticGraph
@@ -355,6 +355,44 @@ lemma one_not_mem_A_of_mod9 {n : Nat}
     simpa [pow_two] using hsub
   exact hnot hmod0
 
+lemma mem_K_of_pow_lt {n k : Nat} (hn0 : n ≠ 0) (hpow : 2 ^ k < n) : k ∈ K n := by
+  unfold K candidateExponents
+  refine Finset.mem_filter.mpr ?_
+  refine ⟨Finset.mem_range.mpr ?_, hpow⟩
+  exact Nat.lt_succ_iff.mpr ((Nat.le_log_iff_pow_le Nat.one_lt_two hn0).2 (le_of_lt hpow))
+
+lemma pow_two_mod_nine_cycle (t : Nat) : (2 ^ (6 * t + 1)) % 9 = 2 := by
+  induction t with
+  | zero => norm_num
+  | succ t ih =>
+      have hExp : 6 * (t + 1) + 1 = (6 * t + 1) + 6 := by omega
+      rw [hExp, Nat.pow_add]
+      norm_num [Nat.mul_mod, ih]
+
+lemma pow_two_mod_nine_of_mod6_eq1 {k : Nat} (hkmod : k % 6 = 1) :
+    (2 ^ k) % 9 = 2 := by
+  have hkdecomp : k = 6 * (k / 6) + 1 := by
+    have hdiv : k % 6 + 6 * (k / 6) = k := Nat.mod_add_div k 6
+    omega
+  rw [hkdecomp]
+  simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using pow_two_mod_nine_cycle (k / 6)
+
+lemma k_not_mem_A_of_mod9_class {n k : Nat}
+    (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) (hkmod : k % 6 = 1) :
+    k ∉ A n (z n) := by
+  classical
+  intro hkA
+  have hsmall :
+      forall p : Nat, Nat.Prime p -> p <= z n -> Not ((M n k) % (p ^ 2) = 0) :=
+    (Finset.mem_filter.mp hkA).2
+  have hk9 : (2 ^ k) % 9 = 2 := pow_two_mod_nine_of_mod6_eq1 hkmod
+  have hmod0 : (M n k) % (3 ^ 2) = 0 := by
+    unfold M
+    have : (n - 2 ^ k) % 9 = 0 := by
+      omega
+    simpa [pow_two] using this
+  exact hsmall 3 (by decide) hz3 hmod0
+
 lemma card_A_le_card_K_sub_two {n z0 : Nat}
     (h0K : 0 ∈ K n) (h1K : 1 ∈ K n)
     (h0A : 0 ∉ A n z0) (h1A : 1 ∉ A n z0) :
@@ -442,7 +480,7 @@ eventually, `A` contains at least `L n - C` exponents.
 def S1_small_prime_sieve_slack (C : Nat) : Prop :=
   exists N1 : Nat, forall n : Nat, N1 <= n -> Odd n -> L n - C <= (A n (z n)).card
 
-theorem not_S1_small_prime_sieve : ¬ S1_small_prime_sieve := by
+lemma not_S1_small_prime_sieve : ¬ S1_small_prime_sieve := by
   intro hS1
   rcases hS1 with ⟨N1, hN1⟩
   let n := 65 + 36 * N1
@@ -459,7 +497,98 @@ theorem not_S1_small_prime_sieve : ¬ S1_small_prime_sieve := by
     simpa using (S1_fails_on_progression N1)
   exact hfail hbound
 
-theorem S1_small_prime_sieve_slack_of_strong {C : Nat}
+lemma not_S1_small_prime_sieve_slack (C : Nat) : ¬ S1_small_prime_sieve_slack C := by
+  intro hS1
+  rcases hS1 with ⟨N1, hN1⟩
+  let t : Nat := max N1 (2 ^ (6 * (C + 1) + 1))
+  let n : Nat := 65 + 36 * t
+  have hnN : N1 <= n := by
+    dsimp [n, t]
+    omega
+  have hodd : Odd n := by
+    dsimp [n]
+    refine ⟨32 + 18 * t, ?_⟩
+    omega
+  have hbound : L n - C <= (A n (z n)).card := hN1 n hnN hodd
+  have hn0 : n ≠ 0 := by
+    dsimp [n]
+    omega
+  have hL6 : 6 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    dsimp [n]
+    omega
+  have hz3 : 3 <= z n := by
+    unfold z
+    omega
+  have hmod9 : n % 9 = 2 := by
+    dsimp [n]
+    omega
+  let S : Finset Nat := (Finset.range (C + 2)).image (fun i => 6 * i + 1)
+  have hSsub : S ⊆ K n \ A n (z n) := by
+    intro k hk
+    rcases Finset.mem_image.mp hk with ⟨i, hi, rfl⟩
+    have hiLe : i <= C + 1 := by
+      exact Nat.le_of_lt_succ (by simpa [Nat.add_assoc] using Finset.mem_range.mp hi)
+    have hpow_le :
+        2 ^ (6 * i + 1) <= 2 ^ (6 * (C + 1) + 1) := by
+      exact Nat.pow_le_pow_right (by decide) (by omega)
+    have ht : 2 ^ (6 * (C + 1) + 1) <= t := by
+      dsimp [t]
+      exact le_max_right N1 (2 ^ (6 * (C + 1) + 1))
+    have hpow_t : 2 ^ (6 * i + 1) <= t := le_trans hpow_le ht
+    have hpow_n : 2 ^ (6 * i + 1) < n := lt_of_le_of_lt hpow_t (by dsimp [n]; omega)
+    have hkK : (6 * i + 1) ∈ K n := mem_K_of_pow_lt hn0 hpow_n
+    have hkmod : (6 * i + 1) % 6 = 1 := by omega
+    have hkNotA : (6 * i + 1) ∉ A n (z n) := k_not_mem_A_of_mod9_class hz3 hmod9 hkmod
+    exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
+  have hcardS : S.card = C + 2 := by
+    unfold S
+    simpa using Finset.card_image_of_injective (s := Finset.range (C + 2))
+      (f := fun i => 6 * i + 1) (by
+        intro i j hij
+        have hmul : 6 * i = 6 * j := Nat.add_right_cancel hij
+        exact Nat.eq_of_mul_eq_mul_left (by decide : 0 < 6) hmul)
+  have hcardLower : C + 2 <= (K n \ A n (z n)).card := by
+    calc
+      C + 2 = S.card := by symm; exact hcardS
+      _ <= (K n \ A n (z n)).card := Finset.card_le_card hSsub
+  have hAdd :
+      (C + 2) + (A n (z n)).card <= (K n).card := by
+    have h1 : (C + 2) + (A n (z n)).card <=
+        (K n \ A n (z n)).card + (A n (z n)).card :=
+      Nat.add_le_add_right hcardLower (A n (z n)).card
+    have h2 : (K n \ A n (z n)).card + (A n (z n)).card = (K n).card :=
+      Finset.card_sdiff_add_card_eq_card (A_subset_K n (z n))
+    exact le_trans h1 (by simp [h2])
+  have hAdd' : (A n (z n)).card + (C + 2) <= (K n).card := by
+    simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hAdd
+  have hA_le_K : (A n (z n)).card <= (K n).card - (C + 2) := Nat.le_sub_of_add_le hAdd'
+  have hA_le_L : (A n (z n)).card <= L n - C - 1 := by
+    have hK : (K n).card <= L n + 1 := card_K_le n
+    have htmp : (A n (z n)).card <= (L n + 1) - (C + 2) := by
+      exact le_trans hA_le_K (Nat.sub_le_sub_right hK (C + 2))
+    have hcalc : (L n + 1) - (C + 2) = L n - C - 1 := by omega
+    simpa [hcalc] using htmp
+  have ht : 2 ^ (6 * (C + 1) + 1) <= t := by
+    dsimp [t]
+    exact le_max_right N1 (2 ^ (6 * (C + 1) + 1))
+  have ht_le_n : t <= n := by
+    dsimp [n]
+    omega
+  have hpowC : 2 ^ (C + 1) <= 2 ^ (6 * (C + 1) + 1) := by
+    exact Nat.pow_le_pow_right (by decide) (by omega)
+  have hC1L : C + 1 <= L n := by
+    unfold L
+    refine (Nat.le_log_iff_pow_le Nat.one_lt_two hn0).2 ?_
+    exact le_trans hpowC (le_trans ht ht_le_n)
+  have hCL : C < L n := lt_of_lt_of_le (Nat.lt_succ_self C) hC1L
+  have hposLC : 0 < L n - C := Nat.sub_pos_of_lt hCL
+  have hcontr : L n - C <= L n - C - 1 := le_trans hbound hA_le_L
+  have hltLC : L n - C - 1 < L n - C := Nat.sub_lt hposLC (by decide : 0 < 1)
+  exact (Nat.not_le_of_gt hltLC) hcontr
+
+lemma S1_small_prime_sieve_slack_of_strong {C : Nat}
     (hS1 : S1_small_prime_sieve) : S1_small_prime_sieve_slack C := by
   rcases hS1 with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -483,7 +612,7 @@ def S1_small_prime_bad_bound_eventually_slack (C : Nat) : Prop :=
     (smallPrimeBad n (z n)).card <= (K n).card - L n + C
 
 /-- S1 decomposition: small-prime bad set is covered by local prime classes. -/
-theorem S1_small_prime_decomp (n : Nat) :
+lemma S1_small_prime_decomp (n : Nat) :
   (smallPrimeBad n (z n)).card <= Finset.sum (smallPrimeSupport n) (fun p => Np n p) := by
   classical
   let badAt : Nat -> Finset Nat := fun p => (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
@@ -541,7 +670,7 @@ def S1_uniform_local_bound_eventually_slack (C0 C : Nat) : Prop :=
     (smallPrimeSupport n).card * C0 <= (K n).card - L n + C
 
 /-- G1: decompose large-prime contribution via local counts. -/
-theorem G1_large_prime_decomp (n : Nat) :
+lemma G1_large_prime_decomp (n : Nat) :
   (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
   classical
   let badAt : Nat -> Finset Nat := fun p => (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
@@ -577,7 +706,7 @@ theorem G1_large_prime_decomp (n : Nat) :
       simp [Np, badAt]
 
 /-- G2 (coarse form): summing local bounds over large-prime support. -/
-theorem G2_large_prime_via_local (n : Nat) :
+lemma G2_large_prime_via_local (n : Nat) :
   Finset.sum (largePrimeSupport n) (fun p => Np n p) <=
     (largePrimeSupport n).card * (L n + 1) := by
   have hpoint : ∀ p ∈ largePrimeSupport n, Np n p <= L n + 1 := by
@@ -601,14 +730,14 @@ eventually, `B` is strictly below `L n - C`.
 def G3_large_prime_error_slack (C : Nat) : Prop :=
   exists N2 : Nat, forall n : Nat, N2 <= n -> Odd n -> (B n (z n)).card < L n - C
 
-theorem G3_large_prime_error_slack_zero_of_strong
+lemma G3_large_prime_error_slack_zero_of_strong
     (hG3 : G3_large_prime_error) : G3_large_prime_error_slack 0 := by
   rcases hG3 with ⟨N, hN⟩
   refine ⟨N, ?_⟩
   intro n hn hodd
   simpa using hN n hn hodd
 
-theorem not_strong_graph_assumptions :
+lemma not_strong_graph_assumptions :
     ¬ (S1_small_prime_sieve ∧ G3_large_prime_error) := by
   intro h
   exact not_S1_small_prime_sieve h.1
@@ -629,14 +758,14 @@ def G3_sum_bound_eventually_slack (C : Nat) : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     Finset.sum (largePrimeSupport n) (fun p => Np n p) < L n - C
 
-theorem G3_of_sum_bound_eventually (hSum : G3_sum_bound_eventually) :
+lemma G3_of_sum_bound_eventually (hSum : G3_sum_bound_eventually) :
     G3_large_prime_error := by
   rcases hSum with ⟨N, hN⟩
   refine ⟨N, ?_⟩
   intro n hn hodd
   exact lt_of_le_of_lt (G1_large_prime_decomp n) (hN n hn hodd)
 
-theorem G3_of_sum_bound_eventually_slack {C : Nat}
+lemma G3_of_sum_bound_eventually_slack {C : Nat}
     (hSum : G3_sum_bound_eventually_slack C) :
     G3_large_prime_error_slack C := by
   rcases hSum with ⟨N, hN⟩
@@ -663,7 +792,7 @@ def G3_uniform_local_bound_eventually_slack (C0 C : Nat) : Prop :=
     (forall p : Nat, p ∈ largePrimeSupport n -> Np n p <= C0) /\
     (largePrimeSupport n).card * C0 < L n - C
 
-theorem G3_of_uniform_local_bound_eventually {C : Nat}
+lemma G3_of_uniform_local_bound_eventually {C : Nat}
     (hUni : G3_uniform_local_bound_eventually C) : G3_large_prime_error := by
   rcases hUni with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -680,7 +809,7 @@ theorem G3_of_uniform_local_bound_eventually {C : Nat}
             simp
   exact lt_of_le_of_lt (le_trans (G1_large_prime_decomp n) hsum) hmul
 
-theorem G3_of_uniform_local_bound_eventually_slack {C0 C : Nat}
+lemma G3_of_uniform_local_bound_eventually_slack {C0 C : Nat}
     (hUni : G3_uniform_local_bound_eventually_slack C0 C) :
     G3_large_prime_error_slack C := by
   rcases hUni with ⟨N, hN⟩
@@ -716,7 +845,7 @@ lemma L_le_card_K_of_pos {n : Nat} (hn : 0 < n) : L n <= (K n).card := by
   have hcard : (Finset.range (L n)).card <= (K n).card := Finset.card_le_card hsubset
   simpa using hcard
 
-theorem S1_of_small_prime_bad_bound_eventually (hBad : S1_small_prime_bad_bound_eventually) :
+lemma S1_of_small_prime_bad_bound_eventually (hBad : S1_small_prime_bad_bound_eventually) :
     S1_small_prime_sieve := by
   rcases hBad with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -735,7 +864,7 @@ theorem S1_of_small_prime_bad_bound_eventually (hBad : S1_small_prime_bad_bound_
       symm
       exact card_A_eq_card_K_sub_smallPrimeBad n (z n)
 
-theorem S1_of_small_prime_bad_bound_eventually_slack {C : Nat}
+lemma S1_of_small_prime_bad_bound_eventually_slack {C : Nat}
     (hBad : S1_small_prime_bad_bound_eventually_slack C) :
     S1_small_prime_sieve_slack C := by
   rcases hBad with ⟨N, hN⟩
@@ -756,7 +885,7 @@ theorem S1_of_small_prime_bad_bound_eventually_slack {C : Nat}
       symm
       exact card_A_eq_card_K_sub_smallPrimeBad n (z n)
 
-theorem S1_of_small_prime_sum_bound_eventually (hSum : S1_small_prime_sum_bound_eventually) :
+lemma S1_of_small_prime_sum_bound_eventually (hSum : S1_small_prime_sum_bound_eventually) :
     S1_small_prime_sieve := by
   apply S1_of_small_prime_bad_bound_eventually
   rcases hSum with ⟨N, hN⟩
@@ -764,7 +893,7 @@ theorem S1_of_small_prime_sum_bound_eventually (hSum : S1_small_prime_sum_bound_
   intro n hn hodd
   exact le_trans (S1_small_prime_decomp n) (hN n hn hodd)
 
-theorem S1_of_small_prime_sum_bound_eventually_slack {C : Nat}
+lemma S1_of_small_prime_sum_bound_eventually_slack {C : Nat}
     (hSum : S1_small_prime_sum_bound_eventually_slack C) :
     S1_small_prime_sieve_slack C := by
   apply S1_of_small_prime_bad_bound_eventually_slack
@@ -773,7 +902,7 @@ theorem S1_of_small_prime_sum_bound_eventually_slack {C : Nat}
   intro n hn hodd
   exact le_trans (S1_small_prime_decomp n) (hN n hn hodd)
 
-theorem S1_of_uniform_local_bound_eventually {C : Nat}
+lemma S1_of_uniform_local_bound_eventually {C : Nat}
     (hUni : S1_uniform_local_bound_eventually C) : S1_small_prime_sieve := by
   apply S1_of_small_prime_sum_bound_eventually
   rcases hUni with ⟨N, hN⟩
@@ -791,7 +920,7 @@ theorem S1_of_uniform_local_bound_eventually {C : Nat}
             simp
   exact le_trans hsum hmul
 
-theorem S1_of_uniform_local_bound_eventually_slack {C0 C : Nat}
+lemma S1_of_uniform_local_bound_eventually_slack {C0 C : Nat}
     (hUni : S1_uniform_local_bound_eventually_slack C0 C) :
     S1_small_prime_sieve_slack C := by
   apply S1_of_small_prime_sum_bound_eventually_slack
@@ -817,7 +946,7 @@ eventually, the small-prime-clean set `A` coincides with the whole exponent wind
 def S1_full_window_eventually : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n -> A n (z n) = K n
 
-theorem S1_of_full_window_eventually (hA : S1_full_window_eventually) :
+lemma S1_of_full_window_eventually (hA : S1_full_window_eventually) :
     S1_small_prime_sieve := by
   rcases hA with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -844,7 +973,7 @@ def G3_support_bound_eventually_slack (C : Nat) : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     (largePrimeSupport n).card * (L n + 1) < L n - C
 
-theorem G3_of_support_bound_eventually (hSupp : G3_support_bound_eventually) :
+lemma G3_of_support_bound_eventually (hSupp : G3_support_bound_eventually) :
     G3_large_prime_error := by
   rcases hSupp with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -852,7 +981,7 @@ theorem G3_of_support_bound_eventually (hSupp : G3_support_bound_eventually) :
   exact lt_of_le_of_lt (le_trans (G1_large_prime_decomp n) (G2_large_prime_via_local n))
     (hN n hn hodd)
 
-theorem G3_of_support_bound_eventually_slack {C : Nat}
+lemma G3_of_support_bound_eventually_slack {C : Nat}
     (hSupp : G3_support_bound_eventually_slack C) :
     G3_large_prime_error_slack C := by
   rcases hSupp with ⟨N, hN⟩
@@ -862,7 +991,7 @@ theorem G3_of_support_bound_eventually_slack {C : Nat}
     (hN n hn hodd)
 
 /-- F1 (slack form): positive survivor count from matched slack assumptions. -/
-theorem F1_positive_survivors_slack {C : Nat}
+lemma F1_positive_survivors_slack {C : Nat}
     (hS1 : S1_small_prime_sieve_slack C) (hG3 : G3_large_prime_error_slack C) :
     exists N3 : Nat,
       forall n : Nat, N3 <= n -> Odd n -> (A n (z n)).card - (B n (z n)).card > 0 := by
@@ -877,7 +1006,7 @@ theorem F1_positive_survivors_slack {C : Nat}
   exact Nat.sub_pos_of_lt (lt_of_lt_of_le hB hA)
 
 /-- F2 (slack form): eventual existence of a squarefree translated value. -/
-theorem F2_eventual_squarefree_slack {C : Nat}
+lemma F2_eventual_squarefree_slack {C : Nat}
     (hS1 : S1_small_prime_sieve_slack C) (hG3 : G3_large_prime_error_slack C) :
     exists N : Nat, forall n : Nat, N <= n -> Odd n ->
       exists k : Nat, k ∈ K n /\ Squarefree (M n k) := by
@@ -887,7 +1016,7 @@ theorem F2_eventual_squarefree_slack {C : Nat}
   exact C4 (hN n hn hodd)
 
 /-- T0 (slack form): asymptotic theorem from matched slack graph assumptions. -/
-theorem T0_erdos11_from_graph_assumptions_slack {C : Nat}
+lemma T0_erdos11_from_graph_assumptions_slack {C : Nat}
     (hS1 : S1_small_prime_sieve_slack C) (hG3 : G3_large_prime_error_slack C) :
     Erdos11Conjecture := by
   rcases F2_eventual_squarefree_slack hS1 hG3 with ⟨N, hN⟩
@@ -896,8 +1025,71 @@ theorem T0_erdos11_from_graph_assumptions_slack {C : Nat}
   rcases hN n hn hodd with ⟨k, hkK, hsq⟩
   exact C5 (C1 hkK) hsq
 
+/--
+Density-form small-prime bound:
+eventually, `a * L n ≤ d * |A n|`.
+-/
+def S1_density (a d : Nat) : Prop :=
+  exists N1 : Nat, forall n : Nat, N1 <= n -> Odd n ->
+    a * L n <= d * (A n (z n)).card
+
+/--
+Density-form large-prime bound:
+eventually, `d * |B n| < b * L n`.
+-/
+def G3_density (b d : Nat) : Prop :=
+  exists N2 : Nat, forall n : Nat, N2 <= n -> Odd n ->
+    d * (B n (z n)).card < b * L n
+
+/-- F1 (density form): positive survivors from `b < a` and density bounds. -/
+lemma F1_positive_survivors_density {a b d : Nat}
+    (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
+    exists N3 : Nat,
+      forall n : Nat, N3 <= n -> Odd n -> (A n (z n)).card - (B n (z n)).card > 0 := by
+  rcases hS1 with ⟨N1, hS1'⟩
+  rcases hG3 with ⟨N2, hG3'⟩
+  refine ⟨max (max N1 N2) 3, ?_⟩
+  intro n hn hodd
+  have hn1 : N1 <= n := le_trans (le_trans (le_max_left N1 N2) (le_max_left (max N1 N2) 3)) hn
+  have hn2 : N2 <= n := le_trans (le_trans (le_max_right N1 N2) (le_max_left (max N1 N2) 3)) hn
+  have hn3 : 3 <= n := le_trans (le_max_right (max N1 N2) 3) hn
+  have hLpos : 0 < L n := by
+    unfold L
+    have h2n : 2 <= n := by omega
+    exact Nat.log_pos Nat.one_lt_two h2n
+  have hA : a * L n <= d * (A n (z n)).card := hS1' n hn1 hodd
+  have hB : d * (B n (z n)).card < b * L n := hG3' n hn2 hodd
+  have hnot : ¬ (A n (z n)).card <= (B n (z n)).card := by
+    intro hle
+    have hmul_le : d * (A n (z n)).card <= d * (B n (z n)).card := Nat.mul_le_mul_left d hle
+    have hltAB : a * L n < b * L n := lt_of_le_of_lt hA (lt_of_le_of_lt hmul_le hB)
+    have hltBA : b * L n < a * L n := Nat.mul_lt_mul_of_pos_right hab hLpos
+    exact (lt_asymm hltBA hltAB)
+  have hBltA : (B n (z n)).card < (A n (z n)).card := lt_of_not_ge hnot
+  exact Nat.sub_pos_of_lt hBltA
+
+/-- F2 (density form): eventual squarefree witness. -/
+lemma F2_eventual_squarefree_density {a b d : Nat}
+    (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
+    exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+      exists k : Nat, k ∈ K n /\ Squarefree (M n k) := by
+  rcases F1_positive_survivors_density hab hS1 hG3 with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  exact C4 (hN n hn hodd)
+
+/-- T0 (density form): asymptotic theorem from density assumptions. -/
+lemma T0_erdos11_from_density_assumptions {a b d : Nat}
+    (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
+    Erdos11Conjecture := by
+  rcases F2_eventual_squarefree_density hab hS1 hG3 with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn hodd
+  rcases hN n hn hodd with ⟨k, hkK, hsq⟩
+  exact C5 (C1 hkK) hsq
+
 /-- F1: positive survivor count from small and large prime estimates. -/
-theorem F1_positive_survivors (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
+lemma F1_positive_survivors (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
     exists N3 : Nat,
       forall n : Nat, N3 <= n -> Odd n -> (A n (z n)).card - (B n (z n)).card > 0 := by
   rcases hS1 with ⟨N1, hS1'⟩
@@ -911,7 +1103,7 @@ theorem F1_positive_survivors (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime
   exact Nat.sub_pos_of_lt (lt_of_lt_of_le hB hA)
 
 /-- F2: eventual existence of a squarefree translated value. -/
-theorem F2_eventual_squarefree (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
+lemma F2_eventual_squarefree (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
     exists N : Nat, forall n : Nat, N <= n -> Odd n ->
       exists k : Nat, k ∈ K n /\ Squarefree (M n k) := by
   rcases F1_positive_survivors hS1 hG3 with ⟨N, hN⟩
@@ -920,7 +1112,7 @@ theorem F2_eventual_squarefree (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prim
   exact C4 (hN n hn hodd)
 
 /-- T0: asymptotic theorem from the graph assumptions. -/
-theorem T0_erdos11_from_graph_assumptions
+lemma T0_erdos11_from_graph_assumptions
     (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) : Erdos11Conjecture := by
   rcases F2_eventual_squarefree hS1 hG3 with ⟨N, hN⟩
   refine ⟨N, ?_⟩
@@ -928,28 +1120,28 @@ theorem T0_erdos11_from_graph_assumptions
   rcases hN n hn hodd with ⟨k, hkK, hsq⟩
   exact C5 (C1 hkK) hsq
 
-theorem T0_erdos11_from_sum_bounds
+lemma T0_erdos11_from_sum_bounds
     (hS1 : S1_small_prime_sum_bound_eventually) (hG3 : G3_sum_bound_eventually) :
     Erdos11Conjecture := by
   exact T0_erdos11_from_graph_assumptions
     (S1_of_small_prime_sum_bound_eventually hS1)
     (G3_of_sum_bound_eventually hG3)
 
-theorem T0_erdos11_from_uniform_local_bounds {Csmall Clarge : Nat}
+lemma T0_erdos11_from_uniform_local_bounds {Csmall Clarge : Nat}
     (hS1 : S1_uniform_local_bound_eventually Csmall)
     (hG3 : G3_uniform_local_bound_eventually Clarge) : Erdos11Conjecture := by
   exact T0_erdos11_from_graph_assumptions
     (S1_of_uniform_local_bound_eventually hS1)
     (G3_of_uniform_local_bound_eventually hG3)
 
-theorem T0_erdos11_from_sum_bounds_slack {C : Nat}
+lemma T0_erdos11_from_sum_bounds_slack {C : Nat}
     (hS1 : S1_small_prime_sum_bound_eventually_slack C)
     (hG3 : G3_sum_bound_eventually_slack C) : Erdos11Conjecture := by
   exact T0_erdos11_from_graph_assumptions_slack
     (S1_of_small_prime_sum_bound_eventually_slack hS1)
     (G3_of_sum_bound_eventually_slack hG3)
 
-theorem T0_erdos11_from_uniform_local_bounds_slack {Csmall Clarge C : Nat}
+lemma T0_erdos11_from_uniform_local_bounds_slack {Csmall Clarge C : Nat}
     (hS1 : S1_uniform_local_bound_eventually_slack Csmall C)
     (hG3 : G3_uniform_local_bound_eventually_slack Clarge C) : Erdos11Conjecture := by
   exact T0_erdos11_from_graph_assumptions_slack
@@ -964,7 +1156,7 @@ def MatchedSumBounds : Prop :=
   exists C : Nat,
     S1_small_prime_sum_bound_eventually_slack C /\ G3_sum_bound_eventually_slack C
 
-theorem T0_of_matched_sum_bounds (h : MatchedSumBounds) : Erdos11Conjecture := by
+lemma T0_of_matched_sum_bounds (h : MatchedSumBounds) : Erdos11Conjecture := by
   rcases h with ⟨C, hS1, hG3⟩
   exact T0_erdos11_from_sum_bounds_slack hS1 hG3
 
@@ -977,11 +1169,24 @@ def MatchedUniformBounds : Prop :=
     S1_uniform_local_bound_eventually_slack Csmall C /\
     G3_uniform_local_bound_eventually_slack Clarge C
 
-theorem T0_of_matched_uniform_bounds (h : MatchedUniformBounds) :
+lemma T0_of_matched_uniform_bounds (h : MatchedUniformBounds) :
     Erdos11Conjecture := by
   rcases h with ⟨Csmall, Clarge, C, hS1, hG3⟩
   exact T0_erdos11_from_uniform_local_bounds_slack hS1 hG3
 
+/--
+Unified density target:
+there exist `a,b,d` with `b < a` giving matched density bounds.
+-/
+def MatchedDensityBounds : Prop :=
+  exists a b d : Nat, b < a /\ S1_density a d /\ G3_density b d
+
+lemma T0_of_matched_density_bounds (h : MatchedDensityBounds) :
+    Erdos11Conjecture := by
+  rcases h with ⟨a, b, d, hab, hS1, hG3⟩
+  exact T0_erdos11_from_density_assumptions hab hS1 hG3
+
 end AsymptoticGraph
 
 end Erdos11
+
