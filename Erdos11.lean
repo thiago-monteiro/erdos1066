@@ -2257,6 +2257,13 @@ lemma not_density_pair_of_d_le_b {a b d : Nat}
   have hbd : b < d := density_pair_implies_b_lt_d hba h.1 h.2
   exact Nat.not_le_of_gt hbd hdb
 
+lemma not_density_pair_of_scaled_le {a b d : Nat}
+    (hba : b < a) (hscaled : 47 * d <= 60 * b) :
+    ¬ (S1_density a d ∧ G3_density b d) := by
+  intro h
+  have hgap : 60 * b < 47 * d := density_pair_implies_scaled_gap hba h.1 h.2
+  exact Nat.not_le_of_gt hgap hscaled
+
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
 lemma F1_positive_survivors_density {a b d : Nat}
     (hab : b < a) (hS1 : S1_density a d) (hG3 : G3_density b d) :
@@ -2420,6 +2427,19 @@ lemma not_MatchedDensityBoundsStrict : ¬ MatchedDensityBoundsStrict := by
   intro h
   rcases h with ⟨a, b, d, hdb, hba, hS1, hG3⟩
   exact (not_density_pair_of_lt_lt hdb hba) ⟨hS1, hG3⟩
+
+/--
+Quantitative constrained density target:
+in addition to `b < a`, require `47*d <= 60*b`.
+This is incompatible with the S1-side modular barrier.
+-/
+def MatchedDensityBoundsScaled : Prop :=
+  exists a b d : Nat, b < a /\ 47 * d <= 60 * b /\ S1_density a d /\ G3_density b d
+
+lemma not_MatchedDensityBoundsScaled : ¬ MatchedDensityBoundsScaled := by
+  intro h
+  rcases h with ⟨a, b, d, hba, hscaled, hS1, hG3⟩
+  exact (not_density_pair_of_scaled_le hba hscaled) ⟨hS1, hG3⟩
 
 lemma matchedDensityBounds_implies_a_le_d (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ a <= d /\ S1_density a d /\ G3_density b d := by
