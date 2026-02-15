@@ -570,6 +570,32 @@ lemma Np_le_largePrimeSupport_piecewise (n p : Nat)
       Np_le_order_class_bound_of_prime_ne_two' (n := n) hp hp2
     simpa [hp2] using hloc
 
+/--
+Unified local bound used for both small- and large-prime supports.
+-/
+noncomputable def localOrderBound (n p : Nat) : Nat :=
+  if hp : Nat.Prime p then
+    if hp2 : p = 2 then
+      L n + 1
+    else
+      (L n + 1) / twoOrderSq p hp hp2 + 1
+  else
+    L n + 1
+
+lemma Np_le_localOrderBound_of_smallPrimeSupport (n p : Nat)
+    (hpS : p ∈ smallPrimeSupport n) :
+    Np n p <= localOrderBound n p := by
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
+  unfold localOrderBound
+  simpa [hp] using Np_le_smallPrimeSupport_piecewise n p hpS
+
+lemma Np_le_localOrderBound_of_largePrimeSupport (n p : Nat)
+    (hpS : p ∈ largePrimeSupport n) :
+    Np n p <= localOrderBound n p := by
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpS).2
+  unfold localOrderBound
+  simpa [hp] using Np_le_largePrimeSupport_piecewise n p hpS
+
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
     (hz2 : 2 <= z n) (hmod4 : n % 4 = 1) : 0 ∉ A n (z n) := by
@@ -879,6 +905,17 @@ lemma S1_small_prime_decomp (n : Nat) :
     _ = Finset.sum (smallPrimeSupport n) (fun p => Np n p) := by
       simp [Np, badAt]
 
+lemma S1_small_prime_decomp_localOrder (n : Nat) :
+    (smallPrimeBad n (z n)).card <=
+      Finset.sum (smallPrimeSupport n) (fun p => localOrderBound n p) := by
+  calc
+    (smallPrimeBad n (z n)).card <= Finset.sum (smallPrimeSupport n) (fun p => Np n p) :=
+      S1_small_prime_decomp n
+    _ <= Finset.sum (smallPrimeSupport n) (fun p => localOrderBound n p) := by
+      exact Finset.sum_le_sum (by
+        intro p hp
+        exact Np_le_localOrderBound_of_smallPrimeSupport n p hp)
+
 /--
 Sufficient condition for `S1_small_prime_sieve`:
 eventually, the small-prime local-count sum is bounded by `|K n| - L n`.
@@ -949,6 +986,16 @@ lemma G1_large_prime_decomp (n : Nat) :
     _ <= Finset.sum (largePrimeSupport n) (fun p => (badAt p).card) := Finset.card_biUnion_le
     _ = Finset.sum (largePrimeSupport n) (fun p => Np n p) := by
       simp [Np, badAt]
+
+lemma G1_large_prime_decomp_localOrder (n : Nat) :
+    (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) := by
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupport n) (fun p => Np n p) :=
+      G1_large_prime_decomp n
+    _ <= Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) := by
+      exact Finset.sum_le_sum (by
+        intro p hp
+        exact Np_le_localOrderBound_of_largePrimeSupport n p hp)
 
 /-- G2 (coarse form): summing local bounds over large-prime support. -/
 lemma G2_large_prime_via_local (n : Nat) :
