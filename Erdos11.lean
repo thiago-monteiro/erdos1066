@@ -2757,6 +2757,19 @@ lemma not_MatchedDensityBoundsStrict : ¬ MatchedDensityBoundsStrict := by
   exact (not_density_pair_of_lt_lt hdb hba) ⟨hS1, hG3⟩
 
 /--
+Nonexpansive density target:
+in addition to `b < a`, require `d <= b`.
+This is inconsistent with the S1-side barrier.
+-/
+def MatchedDensityBoundsNonexpansive : Prop :=
+  exists a b d : Nat, b < a /\ d <= b /\ S1_density a d /\ G3_density b d
+
+lemma not_MatchedDensityBoundsNonexpansive : ¬ MatchedDensityBoundsNonexpansive := by
+  intro h
+  rcases h with ⟨a, b, d, hba, hdb, hS1, hG3⟩
+  exact (not_density_pair_of_d_le_b hba hdb) ⟨hS1, hG3⟩
+
+/--
 Quantitative constrained density target:
 in addition to `b < a`, require `47*d <= 60*b`.
 This is incompatible with the S1-side modular barrier.
@@ -2811,6 +2824,12 @@ lemma matchedDensityBounds_implies_scaled_gap420 (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ 420 * b < 319 * d /\ S1_density a d /\ G3_density b d := by
   rcases h with ⟨a, b, d, hba, hS1, hG3⟩
   exact ⟨a, b, d, hba, density_pair_implies_scaled_gap420 hba hS1 hG3, hS1, hG3⟩
+
+lemma matchedDensityBounds_implies_not_nonexpansive (h : MatchedDensityBounds) :
+    exists a b d : Nat, b < a /\ ¬ d <= b /\ S1_density a d /\ G3_density b d := by
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  have hbd : b < d := density_pair_implies_b_lt_d hba hS1 hG3
+  exact ⟨a, b, d, hba, Nat.not_le_of_gt hbd, hS1, hG3⟩
 
 lemma T0_of_matched_density_bounds (h : MatchedDensityBounds) :
     Erdos11Conjecture := by
