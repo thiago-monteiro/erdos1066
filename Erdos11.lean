@@ -706,6 +706,76 @@ lemma d_mul_3467L_add21947_lt_4620_mul_aL {a d L0 : Nat}
             simp [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
   exact hleft ▸ (lt_of_lt_of_eq hsum hright)
 
+lemma f60060_bound (m : Nat) :
+    60060 * (m + 1 - (m / 6 + m / 20 + m / 42 + m / 110 + m / 156)) <=
+      44686 * m + 344986 := by
+  have h6mod : m % 6 <= 5 := Nat.le_pred_of_lt (Nat.mod_lt _ (by decide : 0 < 6))
+  have h20mod : m % 20 <= 19 := Nat.le_pred_of_lt (Nat.mod_lt _ (by decide : 0 < 20))
+  have h42mod : m % 42 <= 41 := Nat.le_pred_of_lt (Nat.mod_lt _ (by decide : 0 < 42))
+  have h110mod : m % 110 <= 109 := Nat.le_pred_of_lt (Nat.mod_lt _ (by decide : 0 < 110))
+  have h156mod : m % 156 <= 155 := Nat.le_pred_of_lt (Nat.mod_lt _ (by decide : 0 < 156))
+  have h6 : m <= 6 * (m / 6) + 5 := by
+    have hm : m % 6 + 6 * (m / 6) = m := Nat.mod_add_div m 6
+    omega
+  have h20 : m <= 20 * (m / 20) + 19 := by
+    have hm : m % 20 + 20 * (m / 20) = m := Nat.mod_add_div m 20
+    omega
+  have h42 : m <= 42 * (m / 42) + 41 := by
+    have hm : m % 42 + 42 * (m / 42) = m := Nat.mod_add_div m 42
+    omega
+  have h110 : m <= 110 * (m / 110) + 109 := by
+    have hm : m % 110 + 110 * (m / 110) = m := Nat.mod_add_div m 110
+    omega
+  have h156 : m <= 156 * (m / 156) + 155 := by
+    have hm : m % 156 + 156 * (m / 156) = m := Nat.mod_add_div m 156
+    omega
+  have h10010 : 10010 * m <= 60060 * (m / 6) + 50050 := by omega
+  have h3003 : 3003 * m <= 60060 * (m / 20) + 57057 := by omega
+  have h1430 : 1430 * m <= 60060 * (m / 42) + 58630 := by omega
+  have h546 : 546 * m <= 60060 * (m / 110) + 59514 := by omega
+  have h385 : 385 * m <= 60060 * (m / 156) + 59675 := by omega
+  have h15374 :
+      15374 * m <=
+        60060 * (m / 6) + 60060 * (m / 20) + 60060 * (m / 42) + 60060 * (m / 110) +
+          60060 * (m / 156) + 284926 := by
+    omega
+  omega
+
+lemma d_mul_44686L_add344986_lt_60060_mul_aL {a d L0 : Nat}
+    (hRate : 44686 * d < 60060 * a) (hL : 344986 * d + 1 <= L0) :
+    d * (44686 * L0 + 344986) < 60060 * (a * L0) := by
+  have hdeltaPos : 0 < 60060 * a - 44686 * d := Nat.sub_pos_of_lt hRate
+  have hdeltaGe1 : 1 <= 60060 * a - 44686 * d := Nat.succ_le_of_lt hdeltaPos
+  have hLm : 344986 * d + 1 <= (60060 * a - 44686 * d) * L0 := by
+    have hmul : L0 <= (60060 * a - 44686 * d) * L0 := by
+      calc
+        L0 = 1 * L0 := by simp
+        _ <= (60060 * a - 44686 * d) * L0 := Nat.mul_le_mul_right L0 hdeltaGe1
+    exact le_trans hL hmul
+  have hC : 344986 * d < (60060 * a - 44686 * d) * L0 := by
+    exact lt_of_lt_of_le (Nat.lt_succ_self (344986 * d)) hLm
+  have hsum :
+      44686 * (d * L0) + 344986 * d < 44686 * (d * L0) + (60060 * a - 44686 * d) * L0 := by
+    exact Nat.add_lt_add_left hC (44686 * (d * L0))
+  have hleft :
+      d * (44686 * L0 + 344986) = 44686 * (d * L0) + 344986 * d := by
+    calc
+      d * (44686 * L0 + 344986) = d * (44686 * L0) + d * 344986 := by rw [Nat.mul_add]
+      _ = 44686 * (d * L0) + 344986 * d := by
+        simp [Nat.mul_assoc, Nat.mul_comm]
+  have hright :
+      44686 * (d * L0) + (60060 * a - 44686 * d) * L0 = 60060 * (a * L0) := by
+    calc
+      44686 * (d * L0) + (60060 * a - 44686 * d) * L0 =
+          (44686 * d) * L0 + (60060 * a - 44686 * d) * L0 := by
+            simp [Nat.mul_assoc]
+      _ = ((44686 * d) + (60060 * a - 44686 * d)) * L0 := by rw [Nat.add_mul]
+      _ = (60060 * a) * L0 := by
+            simp [Nat.add_sub_of_le (Nat.le_of_lt hRate)]
+      _ = 60060 * (a * L0) := by
+            simp [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm]
+  exact hleft ▸ (lt_of_lt_of_eq hsum hright)
+
 /--
 When `n` is a unit modulo `p^2`, all local solutions lie in one residue class
 modulo the order of `2`, giving a first cardinality upper bound for `Np`.
@@ -1137,6 +1207,32 @@ lemma pow_two_mod_one_twenty_one_of_mod110_eq6 {k : Nat} (hkmod : k % 110 = 6) :
       norm_num
     _ = 64 := by norm_num
 
+lemma pow_two_mod_one_sixty_nine_cycle (t : Nat) : (2 ^ (156 * t)) % 169 = 1 := by
+  induction t with
+  | zero => norm_num
+  | succ t ih =>
+      have hExp : 156 * (t + 1) = 156 * t + 156 := by omega
+      rw [hExp, Nat.pow_add]
+      norm_num [Nat.mul_mod, ih]
+
+lemma pow_two_mod_one_sixty_nine_of_mod156_eq11 {k : Nat} (hkmod : k % 156 = 11) :
+    (2 ^ k) % 169 = 20 := by
+  have hkdecomp : k = 156 * (k / 156) + 11 := by
+    have hdiv : k % 156 + 156 * (k / 156) = k := Nat.mod_add_div k 156
+    omega
+  rw [hkdecomp, Nat.pow_add]
+  have hcycle : (2 ^ (156 * (k / 156))) % 169 = 1 := by
+    simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using
+      pow_two_mod_one_sixty_nine_cycle (k / 156)
+  calc
+    (2 ^ (156 * (k / 156)) * 2 ^ 11) % 169 =
+        (2 ^ (156 * (k / 156)) % 169 * (2 ^ 11 % 169)) % 169 := by
+      simp [Nat.mul_mod, Nat.mul_comm]
+    _ = (1 * 20) % 169 := by
+      rw [hcycle]
+      norm_num
+    _ = 20 := by norm_num
+
 lemma k_not_mem_A_of_mod9_class {n k : Nat}
     (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) (hkmod : k % 6 = 1) :
     k ∉ A n (z n) := by
@@ -1200,6 +1296,22 @@ lemma k_not_mem_A_of_mod121_class {n k : Nat}
       omega
     simpa [pow_two] using this
   exact hsmall 11 (by decide) hz11 hmod0
+
+lemma k_not_mem_A_of_mod169_class {n k : Nat}
+    (hz13 : 13 <= z n) (hmod169 : n % 169 = 20) (hkmod156 : k % 156 = 11) :
+    k ∉ A n (z n) := by
+  classical
+  intro hkA
+  have hsmall :
+      forall p : Nat, Nat.Prime p -> p <= z n -> Not ((M n k) % (p ^ 2) = 0) :=
+    (Finset.mem_filter.mp hkA).2
+  have hk169 : (2 ^ k) % 169 = 20 := pow_two_mod_one_sixty_nine_of_mod156_eq11 hkmod156
+  have hmod0 : (M n k) % (13 ^ 2) = 0 := by
+    unfold M
+    have : (n - 2 ^ k) % 169 = 0 := by
+      omega
+    simpa [pow_two] using this
+  exact hsmall 13 (by decide) hz13 hmod0
 
 lemma mod9_class_one_range_subset_K_sdiff_A {n : Nat}
     (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hmod9 : n % 9 = 2) :
@@ -1304,6 +1416,25 @@ lemma mod121_class_six_range_subset_K_sdiff_A {n : Nat}
   have hkNotA : k ∉ A n (z n) := k_not_mem_A_of_mod121_class hz11 hmod121 hkmod110
   exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
 
+lemma mod169_class_eleven_range_subset_K_sdiff_A {n : Nat}
+    (hn0 : n ≠ 0) (hz13 : 13 <= z n) (hmod169 : n % 169 = 20) :
+    {k ∈ Finset.range (L n) | k ≡ 11 [MOD 156]} ⊆ K n \ A n (z n) := by
+  classical
+  intro k hk
+  have hkRange : k ∈ Finset.range (L n) := (Finset.mem_filter.mp hk).1
+  have hkLt : k < L n := Finset.mem_range.mp hkRange
+  have hkModEq : k ≡ 11 [MOD 156] := (Finset.mem_filter.mp hk).2
+  have hkmod156 : k % 156 = 11 := by
+    simpa [Nat.ModEq] using hkModEq
+  have hkPow : 2 ^ k < n := by
+    unfold L at hkLt
+    have hpow : 2 ^ k < 2 ^ Nat.log 2 n := Nat.pow_lt_pow_right Nat.one_lt_two hkLt
+    have hle : 2 ^ Nat.log 2 n <= n := Nat.pow_log_le_self 2 hn0
+    exact lt_of_lt_of_le hpow hle
+  have hkK : k ∈ K n := mem_K_of_pow_lt hn0 hkPow
+  have hkNotA : k ∉ A n (z n) := k_not_mem_A_of_mod169_class hz13 hmod169 hkmod156
+  exact Finset.mem_sdiff.mpr ⟨hkK, hkNotA⟩
+
 lemma mod9_mod25_class_disjoint (m : Nat) :
     Disjoint
       {k ∈ Finset.range m | k ≡ 1 [MOD 6]}
@@ -1393,6 +1524,65 @@ lemma mod49_mod121_class_disjoint (m : Nat) :
   have hk110To2 : k % 2 = 0 := by omega
   have h10 : (1 : Nat) = 0 := hk42To2.symm.trans hk110To2
   exact Nat.one_ne_zero h10
+
+lemma mod9_mod169_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 1 [MOD 6]}
+      {k ∈ Finset.range m | k ≡ 11 [MOD 156]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk6 hk156
+  have hk6mod : k % 6 = 1 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk6).2
+  have hk156mod : k % 156 = 11 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk156).2
+  have hk156To6 : k % 6 = 5 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod20_mod169_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 0 [MOD 20]}
+      {k ∈ Finset.range m | k ≡ 11 [MOD 156]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk20 hk156
+  have hk20mod : k % 20 = 0 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk20).2
+  have hk156mod : k % 156 = 11 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk156).2
+  have hk20To2 : k % 2 = 0 := by omega
+  have hk156To2 : k % 2 = 1 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod49_mod169_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 3 [MOD 42]}
+      {k ∈ Finset.range m | k ≡ 11 [MOD 156]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk42 hk156
+  have hk42mod : k % 42 = 3 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk42).2
+  have hk156mod : k % 156 = 11 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk156).2
+  have hk42To6 : k % 6 = 3 := by omega
+  have hk156To6 : k % 6 = 5 := by omega
+  have : False := by omega
+  exact this.elim
+
+lemma mod121_mod169_class_disjoint (m : Nat) :
+    Disjoint
+      {k ∈ Finset.range m | k ≡ 6 [MOD 110]}
+      {k ∈ Finset.range m | k ≡ 11 [MOD 156]} := by
+  refine Finset.disjoint_left.mpr ?_
+  intro k hk110 hk156
+  have hk110mod : k % 110 = 6 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk110).2
+  have hk156mod : k % 156 = 11 := by
+    simpa [Nat.ModEq] using (Finset.mem_filter.mp hk156).2
+  have hk110To2 : k % 2 = 0 := by omega
+  have hk156To2 : k % 2 = 1 := by omega
+  have : False := by omega
+  exact this.elim
 
 lemma card_A_le_L_add_one_sub_div_six_add_div_twenty_of_mod9_mod25 {n : Nat}
     (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hz5 : 5 <= z n)
@@ -1649,6 +1839,181 @@ lemma card_A_le_L_add_one_sub_div_6_20_42_110_of_mods
     (A n (z n)).card <= (K n).card - (L n / 6 + L n / 20 + L n / 42 + L n / 110) := hA_le_K
     _ <= (L n + 1) - (L n / 6 + L n / 20 + L n / 42 + L n / 110) :=
       Nat.sub_le_sub_right (card_K_le n) (L n / 6 + L n / 20 + L n / 42 + L n / 110)
+
+lemma card_A_le_L_add_one_sub_div_6_20_42_110_156_of_mods
+    {n : Nat}
+    (hn0 : n ≠ 0) (hz3 : 3 <= z n) (hz5 : 5 <= z n) (hz7 : 7 <= z n) (hz11 : 11 <= z n)
+    (hz13 : 13 <= z n)
+    (hmod9 : n % 9 = 2) (hmod25 : n % 25 = 1) (hmod49 : n % 49 = 8)
+    (hmod121 : n % 121 = 64) (hmod169 : n % 169 = 20) :
+    (A n (z n)).card <= L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) := by
+  classical
+  let S6 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 1 [MOD 6]}
+  let S20 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 0 [MOD 20]}
+  let S42 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 3 [MOD 42]}
+  let S110 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 6 [MOD 110]}
+  let S156 : Finset Nat := {k ∈ Finset.range (L n) | k ≡ 11 [MOD 156]}
+  let S620 : Finset Nat := S6 ∪ S20
+  let S62042 : Finset Nat := S620 ∪ S42
+  let Sprev : Finset Nat := S62042 ∪ S110
+  let S : Finset Nat := Sprev ∪ S156
+  have hS6sub : S6 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod9_class_one_range_subset_K_sdiff_A hn0 hz3 hmod9 (by simpa [S6] using hk)
+  have hS20sub : S20 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod25_class_zero_range_subset_K_sdiff_A hn0 hz5 hmod25 (by simpa [S20] using hk)
+  have hS42sub : S42 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod49_class_three_range_subset_K_sdiff_A hn0 hz7 hmod49 (by simpa [S42] using hk)
+  have hS110sub : S110 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod121_class_six_range_subset_K_sdiff_A hn0 hz11 hmod121 (by simpa [S110] using hk)
+  have hS156sub : S156 ⊆ K n \ A n (z n) := by
+    intro k hk
+    exact mod169_class_eleven_range_subset_K_sdiff_A hn0 hz13 hmod169 (by simpa [S156] using hk)
+  have hSsub : S ⊆ K n \ A n (z n) := by
+    intro k hk
+    rcases Finset.mem_union.mp hk with hkPrev | hk156
+    · rcases Finset.mem_union.mp hkPrev with hk62042 | hk110
+      · rcases Finset.mem_union.mp hk62042 with hk620 | hk42
+        · rcases Finset.mem_union.mp hk620 with hk6 | hk20
+          · exact hS6sub hk6
+          · exact hS20sub hk20
+        · exact hS42sub hk42
+      · exact hS110sub hk110
+    · exact hS156sub hk156
+  have hS6card : L n / 6 <= S6.card := by
+    have hcard := card_range_modEq_ge_div (b := L n) (r := 6) (v := 1) (by decide : 0 < 6)
+    simpa [S6] using hcard
+  have hS20card : L n / 20 <= S20.card := by
+    have hcard := card_range_modEq_ge_div (b := L n) (r := 20) (v := 0) (by decide : 0 < 20)
+    simpa [S20] using hcard
+  have hS42card : L n / 42 <= S42.card := by
+    have hcard := card_range_modEq_ge_div (b := L n) (r := 42) (v := 3) (by decide : 0 < 42)
+    simpa [S42] using hcard
+  have hS110card : L n / 110 <= S110.card := by
+    have hcard := card_range_modEq_ge_div (b := L n) (r := 110) (v := 6) (by decide : 0 < 110)
+    simpa [S110] using hcard
+  have hS156card : L n / 156 <= S156.card := by
+    have hcard := card_range_modEq_ge_div (b := L n) (r := 156) (v := 11) (by decide : 0 < 156)
+    simpa [S156] using hcard
+  have hDisj620 : Disjoint S6 S20 := by
+    simpa [S6, S20] using mod9_mod25_class_disjoint (L n)
+  have hDisj642 : Disjoint S6 S42 := by
+    simpa [S6, S42] using mod9_mod49_class_disjoint (L n)
+  have hDisj2042 : Disjoint S20 S42 := by
+    simpa [S20, S42] using mod20_mod49_class_disjoint (L n)
+  have hDisj620_42 : Disjoint S620 S42 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hk620 hk42
+    rcases Finset.mem_union.mp hk620 with hk6 | hk20
+    · exact (Finset.disjoint_left.mp hDisj642) hk6 hk42
+    · exact (Finset.disjoint_left.mp hDisj2042) hk20 hk42
+  have hDisj6_110 : Disjoint S6 S110 := by
+    simpa [S6, S110] using mod9_mod121_class_disjoint (L n)
+  have hDisj20_110 : Disjoint S20 S110 := by
+    simpa [S20, S110] using mod20_mod121_class_disjoint (L n)
+  have hDisj42_110 : Disjoint S42 S110 := by
+    simpa [S42, S110] using mod49_mod121_class_disjoint (L n)
+  have hDisj620_110 : Disjoint S620 S110 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hk620 hk110
+    rcases Finset.mem_union.mp hk620 with hk6 | hk20
+    · exact (Finset.disjoint_left.mp hDisj6_110) hk6 hk110
+    · exact (Finset.disjoint_left.mp hDisj20_110) hk20 hk110
+  have hDisj62042_110 : Disjoint S62042 S110 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hk62042 hk110
+    rcases Finset.mem_union.mp hk62042 with hk620 | hk42
+    · exact (Finset.disjoint_left.mp hDisj620_110) hk620 hk110
+    · exact (Finset.disjoint_left.mp hDisj42_110) hk42 hk110
+  have hDisj6_156 : Disjoint S6 S156 := by
+    simpa [S6, S156] using mod9_mod169_class_disjoint (L n)
+  have hDisj20_156 : Disjoint S20 S156 := by
+    simpa [S20, S156] using mod20_mod169_class_disjoint (L n)
+  have hDisj42_156 : Disjoint S42 S156 := by
+    simpa [S42, S156] using mod49_mod169_class_disjoint (L n)
+  have hDisj110_156 : Disjoint S110 S156 := by
+    simpa [S110, S156] using mod121_mod169_class_disjoint (L n)
+  have hDisj620_156 : Disjoint S620 S156 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hk620 hk156
+    rcases Finset.mem_union.mp hk620 with hk6 | hk20
+    · exact (Finset.disjoint_left.mp hDisj6_156) hk6 hk156
+    · exact (Finset.disjoint_left.mp hDisj20_156) hk20 hk156
+  have hDisj62042_156 : Disjoint S62042 S156 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hk62042 hk156
+    rcases Finset.mem_union.mp hk62042 with hk620 | hk42
+    · exact (Finset.disjoint_left.mp hDisj620_156) hk620 hk156
+    · exact (Finset.disjoint_left.mp hDisj42_156) hk42 hk156
+  have hDisjPrev_156 : Disjoint Sprev S156 := by
+    refine Finset.disjoint_left.mpr ?_
+    intro k hkPrev hk156
+    rcases Finset.mem_union.mp hkPrev with hk62042 | hk110
+    · exact (Finset.disjoint_left.mp hDisj62042_156) hk62042 hk156
+    · exact (Finset.disjoint_left.mp hDisj110_156) hk110 hk156
+  have hS620card : S620.card = S6.card + S20.card := by
+    have hinter : S6 ∩ S20 = ∅ := Finset.disjoint_iff_inter_eq_empty.mp hDisj620
+    have hcard : (S6 ∪ S20).card + (S6 ∩ S20).card = S6.card + S20.card :=
+      Finset.card_union_add_card_inter S6 S20
+    simpa [S620, hinter] using hcard
+  have hS62042card : S62042.card = S6.card + S20.card + S42.card := by
+    have hinter : S620 ∩ S42 = ∅ := Finset.disjoint_iff_inter_eq_empty.mp hDisj620_42
+    have hcard : (S620 ∪ S42).card + (S620 ∩ S42).card = S620.card + S42.card :=
+      Finset.card_union_add_card_inter S620 S42
+    calc
+      S62042.card = S620.card + S42.card := by
+        simpa [S62042, hinter] using hcard
+      _ = S6.card + S20.card + S42.card := by rw [hS620card]
+  have hSprevcard : Sprev.card = S6.card + S20.card + S42.card + S110.card := by
+    have hinter : S62042 ∩ S110 = ∅ := Finset.disjoint_iff_inter_eq_empty.mp hDisj62042_110
+    have hcard : (S62042 ∪ S110).card + (S62042 ∩ S110).card = S62042.card + S110.card :=
+      Finset.card_union_add_card_inter S62042 S110
+    calc
+      Sprev.card = S62042.card + S110.card := by
+        simpa [Sprev, hinter] using hcard
+      _ = S6.card + S20.card + S42.card + S110.card := by rw [hS62042card]
+  have hScard : S.card = S6.card + S20.card + S42.card + S110.card + S156.card := by
+    have hinter : Sprev ∩ S156 = ∅ := Finset.disjoint_iff_inter_eq_empty.mp hDisjPrev_156
+    have hcard : (Sprev ∪ S156).card + (Sprev ∩ S156).card = Sprev.card + S156.card :=
+      Finset.card_union_add_card_inter Sprev S156
+    calc
+      S.card = Sprev.card + S156.card := by
+        simpa [S, hinter] using hcard
+      _ = S6.card + S20.card + S42.card + S110.card + S156.card := by rw [hSprevcard]
+  have hLower :
+      L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156 <= (K n \ A n (z n)).card := by
+    calc
+      L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156 <=
+          S6.card + S20.card + S42.card + S110.card + S156.card := by
+            exact Nat.add_le_add
+              (Nat.add_le_add (Nat.add_le_add (Nat.add_le_add hS6card hS20card) hS42card) hS110card)
+              hS156card
+      _ = S.card := by symm; exact hScard
+      _ <= (K n \ A n (z n)).card := Finset.card_le_card hSsub
+  have hAdd :
+      (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) + (A n (z n)).card <=
+        (K n).card := by
+    have h1 :
+        (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) + (A n (z n)).card <=
+          (K n \ A n (z n)).card + (A n (z n)).card := Nat.add_le_add_right hLower _
+    have h2 : (K n \ A n (z n)).card + (A n (z n)).card = (K n).card :=
+      Finset.card_sdiff_add_card_eq_card (A_subset_K n (z n))
+    exact le_trans h1 (by simp [h2])
+  have hAdd' :
+      (A n (z n)).card + (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) <=
+        (K n).card := by
+    simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hAdd
+  have hA_le_K :
+      (A n (z n)).card <= (K n).card - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) :=
+    Nat.le_sub_of_add_le hAdd'
+  calc
+    (A n (z n)).card <=
+        (K n).card - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) := hA_le_K
+    _ <= (L n + 1) - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) :=
+      Nat.sub_le_sub_right (card_K_le n) (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156)
 
 lemma card_A_le_card_K_sub_two {n z0 : Nat}
     (h0K : 0 ∈ K n) (h1K : 1 ∈ K n)
@@ -2828,6 +3193,102 @@ lemma not_S1_density_of_3467_mul_lt_4620_mul {a d : Nat}
     d_mul_3467L_add21947_lt_4620_mul_aL hRate hLbig
   exact (Nat.not_le_of_gt hstrict) hcontr
 
+lemma not_S1_density_of_44686_mul_lt_60060_mul {a d : Nat}
+    (hRate : 44686 * d < 60060 * a) : ¬ S1_density a d := by
+  intro hS1
+  rcases hS1 with ⟨N1, hN1⟩
+  let t : Nat := max N1 (max 3 (2 ^ (344986 * d + 1)))
+  let n : Nat := 199952201 + 450900450 * t
+  have hnN : N1 <= n := by
+    dsimp [n, t]
+    omega
+  have hodd : Odd n := by
+    dsimp [n]
+    refine ⟨99976100 + 225450225 * t, ?_⟩
+    omega
+  have hbound : a * L n <= d * (A n (z n)).card := hN1 n hnN hodd
+  have hn0 : n ≠ 0 := by
+    dsimp [n]
+    omega
+  have hL30 : 30 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    dsimp [n, t]
+    omega
+  have hz3 : 3 <= z n := by
+    unfold z
+    omega
+  have hz5 : 5 <= z n := by
+    unfold z
+    omega
+  have hz7 : 7 <= z n := by
+    unfold z
+    omega
+  have hz11 : 11 <= z n := by
+    unfold z
+    omega
+  have hz13 : 13 <= z n := by
+    unfold z
+    omega
+  have hmod9 : n % 9 = 2 := by
+    dsimp [n]
+    omega
+  have hmod25 : n % 25 = 1 := by
+    dsimp [n]
+    omega
+  have hmod49 : n % 49 = 8 := by
+    dsimp [n]
+    omega
+  have hmod121 : n % 121 = 64 := by
+    dsimp [n]
+    omega
+  have hmod169 : n % 169 = 20 := by
+    dsimp [n]
+    omega
+  have hAub :
+      (A n (z n)).card <= L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156) :=
+    card_A_le_L_add_one_sub_div_6_20_42_110_156_of_mods
+      hn0 hz3 hz5 hz7 hz11 hz13 hmod9 hmod25 hmod49 hmod121 hmod169
+  have hLbig : 344986 * d + 1 <= L n := by
+    unfold L
+    rw [Nat.le_log_iff_pow_le Nat.one_lt_two hn0]
+    have htPow : 2 ^ (344986 * d + 1) <= t := by
+      dsimp [t]
+      exact le_trans
+        (le_max_right 3 (2 ^ (344986 * d + 1)))
+        (le_max_right N1 (max 3 (2 ^ (344986 * d + 1))))
+    have ht_le_n : t <= n := by
+      dsimp [n]
+      omega
+    exact le_trans htPow ht_le_n
+  have hmul :
+      d * (A n (z n)).card <=
+        d * (L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156)) :=
+    Nat.mul_le_mul_left d hAub
+  have hmul60060 :
+      60060 * (d * (A n (z n)).card) <=
+        60060 * (d * (L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156))) :=
+    Nat.mul_le_mul_left 60060 hmul
+  have hcore :
+      60060 * (L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156)) <=
+        44686 * L n + 344986 := f60060_bound (L n)
+  have hcoreMul :
+      d * (60060 * (L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156))) <=
+        d * (44686 * L n + 344986) :=
+    Nat.mul_le_mul_left d hcore
+  have hAupper60060 : 60060 * (d * (A n (z n)).card) <= d * (44686 * L n + 344986) := by
+    have hmul60060' :
+        60060 * (d * (A n (z n)).card) <=
+          d * (60060 * (L n + 1 - (L n / 6 + L n / 20 + L n / 42 + L n / 110 + L n / 156))) := by
+      simpa [Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm] using hmul60060
+    exact le_trans hmul60060' hcoreMul
+  have hbound60060 : 60060 * (a * L n) <= 60060 * (d * (A n (z n)).card) :=
+    Nat.mul_le_mul_left 60060 hbound
+  have hcontr : 60060 * (a * L n) <= d * (44686 * L n + 344986) := le_trans hbound60060 hAupper60060
+  have hstrict : d * (44686 * L n + 344986) < 60060 * (a * L n) :=
+    d_mul_44686L_add344986_lt_60060_mul_aL hRate hLbig
+  exact (Nat.not_le_of_gt hstrict) hcontr
+
 lemma not_S1_density_of_le_pos {a d : Nat} (ha : 0 < a) (hda : d <= a) :
     ¬ S1_density a d := by
   have h5da : 5 * d <= 5 * a := Nat.mul_le_mul_left 5 hda
@@ -2851,6 +3312,11 @@ lemma S1_density_implies_4620_mul_a_le_3467_mul_d {a d : Nat}
     (hS1 : S1_density a d) : 4620 * a <= 3467 * d := by
   by_contra h
   exact (not_S1_density_of_3467_mul_lt_4620_mul (lt_of_not_ge h)) hS1
+
+lemma S1_density_implies_60060_mul_a_le_44686_mul_d {a d : Nat}
+    (hS1 : S1_density a d) : 60060 * a <= 44686 * d := by
+  by_contra h
+  exact (not_S1_density_of_44686_mul_lt_60060_mul (lt_of_not_ge h)) hS1
 
 lemma S1_density_implies_a_le_d {a d : Nat} (hS1 : S1_density a d) : a <= d := by
   by_cases had : a <= d
@@ -2961,6 +3427,12 @@ lemma density_pair_implies_scaled_gap4620 {a b d : Nat}
   have hb4620 : 4620 * b < 4620 * a := Nat.mul_lt_mul_of_pos_left hba (by decide : 0 < 4620)
   exact lt_of_lt_of_le hb4620 (S1_density_implies_4620_mul_a_le_3467_mul_d hS1)
 
+lemma density_pair_implies_scaled_gap60060 {a b d : Nat}
+    (hba : b < a) (hS1 : S1_density a d) (_hG3 : G3_density b d) :
+    60060 * b < 44686 * d := by
+  have hb60060 : 60060 * b < 60060 * a := Nat.mul_lt_mul_of_pos_left hba (by decide : 0 < 60060)
+  exact lt_of_lt_of_le hb60060 (S1_density_implies_60060_mul_a_le_44686_mul_d hS1)
+
 lemma not_density_pair_of_d_le_b {a b d : Nat}
     (hba : b < a) (hdb : d <= b) :
     ¬ (S1_density a d ∧ G3_density b d) := by
@@ -2987,6 +3459,13 @@ lemma not_density_pair_of_scaled4620_le {a b d : Nat}
     ¬ (S1_density a d ∧ G3_density b d) := by
   intro h
   have hgap : 4620 * b < 3467 * d := density_pair_implies_scaled_gap4620 hba h.1 h.2
+  exact Nat.not_le_of_gt hgap hscaled
+
+lemma not_density_pair_of_scaled60060_le {a b d : Nat}
+    (hba : b < a) (hscaled : 44686 * d <= 60060 * b) :
+    ¬ (S1_density a d ∧ G3_density b d) := by
+  intro h
+  have hgap : 60060 * b < 44686 * d := density_pair_implies_scaled_gap60060 hba h.1 h.2
   exact Nat.not_le_of_gt hgap hscaled
 
 /-- F1 (density form): positive survivors from `b < a` and density bounds. -/
@@ -3205,6 +3684,19 @@ lemma not_MatchedDensityBoundsScaled4620 : ¬ MatchedDensityBoundsScaled4620 := 
   rcases h with ⟨a, b, d, hba, hscaled, hS1, hG3⟩
   exact (not_density_pair_of_scaled4620_le hba hscaled) ⟨hS1, hG3⟩
 
+/--
+Even stronger quantitative constrained density target:
+in addition to `b < a`, require `44686*d <= 60060*b`.
+This is incompatible with the strongest S1-side modular barrier in this file.
+-/
+def MatchedDensityBoundsScaled60060 : Prop :=
+  exists a b d : Nat, b < a /\ 44686 * d <= 60060 * b /\ S1_density a d /\ G3_density b d
+
+lemma not_MatchedDensityBoundsScaled60060 : ¬ MatchedDensityBoundsScaled60060 := by
+  intro h
+  rcases h with ⟨a, b, d, hba, hscaled, hS1, hG3⟩
+  exact (not_density_pair_of_scaled60060_le hba hscaled) ⟨hS1, hG3⟩
+
 lemma matchedDensityBounds_implies_a_le_d (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ a <= d /\ S1_density a d /\ G3_density b d := by
   rcases h with ⟨a, b, d, hba, hS1, hG3⟩
@@ -3239,6 +3731,11 @@ lemma matchedDensityBounds_implies_scaled_gap4620 (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ 4620 * b < 3467 * d /\ S1_density a d /\ G3_density b d := by
   rcases h with ⟨a, b, d, hba, hS1, hG3⟩
   exact ⟨a, b, d, hba, density_pair_implies_scaled_gap4620 hba hS1 hG3, hS1, hG3⟩
+
+lemma matchedDensityBounds_implies_scaled_gap60060 (h : MatchedDensityBounds) :
+    exists a b d : Nat, b < a /\ 60060 * b < 44686 * d /\ S1_density a d /\ G3_density b d := by
+  rcases h with ⟨a, b, d, hba, hS1, hG3⟩
+  exact ⟨a, b, d, hba, density_pair_implies_scaled_gap60060 hba hS1 hG3, hS1, hG3⟩
 
 lemma matchedDensityBounds_implies_not_nonexpansive (h : MatchedDensityBounds) :
     exists a b d : Nat, b < a /\ ¬ d <= b /\ S1_density a d /\ G3_density b d := by
