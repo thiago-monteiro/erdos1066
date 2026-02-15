@@ -1156,6 +1156,12 @@ def MatchedSumBounds : Prop :=
   exists C : Nat,
     S1_small_prime_sum_bound_eventually_slack C /\ G3_sum_bound_eventually_slack C
 
+lemma not_MatchedSumBounds : ¬ MatchedSumBounds := by
+  intro h
+  rcases h with ⟨C, hS1, _hG3⟩
+  have hS1' : S1_small_prime_sieve_slack C := S1_of_small_prime_sum_bound_eventually_slack hS1
+  exact not_S1_small_prime_sieve_slack C hS1'
+
 lemma T0_of_matched_sum_bounds (h : MatchedSumBounds) : Erdos11Conjecture := by
   rcases h with ⟨C, hS1, hG3⟩
   exact T0_erdos11_from_sum_bounds_slack hS1 hG3
@@ -1168,6 +1174,12 @@ def MatchedUniformBounds : Prop :=
   exists Csmall Clarge C : Nat,
     S1_uniform_local_bound_eventually_slack Csmall C /\
     G3_uniform_local_bound_eventually_slack Clarge C
+
+lemma not_MatchedUniformBounds : ¬ MatchedUniformBounds := by
+  intro h
+  rcases h with ⟨Csmall, Clarge, C, hS1, _hG3⟩
+  have hS1' : S1_small_prime_sieve_slack C := S1_of_uniform_local_bound_eventually_slack hS1
+  exact not_S1_small_prime_sieve_slack C hS1'
 
 lemma T0_of_matched_uniform_bounds (h : MatchedUniformBounds) :
     Erdos11Conjecture := by
