@@ -20,6 +20,22 @@ all sufficiently large odd numbers satisfy `Represents`.
 def Erdos11Conjecture : Prop :=
   ∃ N : Nat, ∀ n : Nat, N ≤ n → Odd n → Represents n
 
+lemma not_Erdos11Conjecture_iff_unbounded_odd_counterexamples :
+    ¬ Erdos11Conjecture ↔
+      ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n := by
+  constructor
+  · intro hNot N
+    by_contra hNo
+    have hAll : ∀ n : Nat, N ≤ n → Odd n → Represents n := by
+      intro n hn hodd
+      by_contra hRep
+      exact hNo ⟨n, hn, hodd, hRep⟩
+    exact hNot ⟨N, hAll⟩
+  · intro hUnbounded hE
+    rcases hE with ⟨N, hN⟩
+    rcases hUnbounded N with ⟨n, hn, hodd, hNotRep⟩
+    exact hNotRep (hN n hn hodd)
+
 /-- Candidate exponents bounded by `log_2 n` and satisfying `2^k < n`. -/
 def candidateExponents (n : Nat) : Finset Nat :=
   (Finset.range (Nat.log 2 n + 1)).filter (fun k => 2 ^ k < n)
@@ -294,6 +310,33 @@ lemma C4 {n z : Nat} (hpos : (A n z).card - (B n z).card > 0) :
 lemma C5 {n k : Nat} (hk : 2 ^ k < n) (hsq : Squarefree (M n k)) :
     Represents n := by
   exact represents_of_exponent hk hsq
+
+lemma A_subset_B_of_not_represents {n z0 : Nat} (hNotRep : ¬ Represents n) :
+    A n z0 ⊆ B n z0 := by
+  intro k hkA
+  by_contra hkB
+  have hsq : Squarefree (M n k) := C2 hkA hkB
+  have hkK : k ∈ K n := A_subset_K n z0 hkA
+  exact hNotRep (C5 (C1 hkK) hsq)
+
+lemma card_A_le_card_B_of_not_represents {n z0 : Nat} (hNotRep : ¬ Represents n) :
+    (A n z0).card <= (B n z0).card := by
+  exact Finset.card_le_card (A_subset_B_of_not_represents hNotRep)
+
+lemma card_A_sub_B_eq_zero_of_not_represents {n z0 : Nat} (hNotRep : ¬ Represents n) :
+    (A n z0 \ B n z0).card = 0 := by
+  apply Finset.card_eq_zero.mpr
+  exact Finset.eq_empty_iff_forall_notMem.mpr (by
+    intro k hk
+    have hkA : k ∈ A n z0 := (Finset.mem_sdiff.mp hk).1
+    have hkB : k ∉ B n z0 := (Finset.mem_sdiff.mp hk).2
+    have hsq : Squarefree (M n k) := C2 hkA hkB
+    have hkK : k ∈ K n := A_subset_K n z0 hkA
+    exact hNotRep (C5 (C1 hkK) hsq))
+
+lemma card_A_sub_card_B_eq_zero_of_not_represents {n z0 : Nat} (hNotRep : ¬ Represents n) :
+    (A n z0).card - (B n z0).card = 0 := by
+  exact Nat.sub_eq_zero_of_le (card_A_le_card_B_of_not_represents hNotRep)
 
 /-- Prime support used in small-prime counting. -/
 noncomputable def smallPrimeSupport (n : Nat) : Finset Nat := by
@@ -5821,5 +5864,29 @@ lemma erdos11_conditional_asymptotic_explicit {a b d : Nat}
     (hG3 : AsymptoticGraph.G3_density b d) :
     Erdos11Conjecture := by
   exact AsymptoticGraph.T0_erdos11_from_density_assumptions hab hS1 hG3
+
+/--
+Bridge-closure principle:
+if every global counterexample profile forces the scaled matched-density target,
+then Erdős #11 follows unconditionally.
+-/
+lemma erdos11_of_counterexample_bridge16673316660
+    (hBridge : ¬ Erdos11Conjecture →
+      AsymptoticGraph.MatchedDensityBoundsScaled16673316660) :
+    Erdos11Conjecture := by
+  by_contra hNot
+  exact AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660 (hBridge hNot)
+
+/--
+Equivalent bridge form phrased via unbounded odd counterexamples.
+-/
+lemma erdos11_of_unbounded_counterexample_bridge16673316660
+    (hBridge :
+      (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) →
+        AsymptoticGraph.MatchedDensityBoundsScaled16673316660) :
+    Erdos11Conjecture := by
+  apply erdos11_of_counterexample_bridge16673316660
+  intro hNot
+  exact hBridge (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot)
 
 end Erdos11
