@@ -36,6 +36,90 @@ lemma not_Erdos11Conjecture_iff_unbounded_odd_counterexamples :
     rcases hUnbounded N with ⟨n, hn, hodd, hNotRep⟩
     exact hNotRep (hN n hn hodd)
 
+lemma unbounded_counterexamples_elim_of_erdos11 {P : Prop}
+    (hE : Erdos11Conjecture) :
+    (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P := by
+  intro hUnbounded
+  exact False.elim
+    ((not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mpr hUnbounded) hE)
+
+lemma not_erdos11_elim_of_erdos11 {P : Prop}
+    (hE : Erdos11Conjecture) :
+    (¬ Erdos11Conjecture → P) := by
+  intro hNot
+  exact False.elim (hNot hE)
+
+lemma force_false_target_iff_not_unbounded_odd_counterexamples {P : Prop}
+    (hP : ¬ P) :
+    ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  constructor
+  · intro hForce hUnbounded
+    exact hP (hForce hUnbounded)
+  · intro hNo hUnbounded
+    exact False.elim (hNo hUnbounded)
+
+lemma force_false_target_iff_erdos11 {P : Prop}
+    (hP : ¬ P) :
+    ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      Erdos11Conjecture := by
+  constructor
+  · intro hForce
+    by_contra hNot
+    exact hP (hForce (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot))
+  · exact unbounded_counterexamples_elim_of_erdos11
+
+lemma neg_force_false_target_iff_erdos11 {P : Prop}
+    (hP : ¬ P) :
+    (¬ Erdos11Conjecture → P) ↔ Erdos11Conjecture := by
+  constructor
+  · intro hForce
+    by_contra hNot
+    exact hP (hForce hNot)
+  · exact not_erdos11_elim_of_erdos11
+
+lemma force_false_targets_iff {P Q : Prop}
+    (hP : ¬ P) (hQ : ¬ Q) :
+    (((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → Q)) := by
+  rw [force_false_target_iff_not_unbounded_odd_counterexamples hP,
+    force_false_target_iff_not_unbounded_odd_counterexamples hQ]
+
+lemma neg_force_false_targets_iff {P Q : Prop}
+    (hP : ¬ P) (hQ : ¬ Q) :
+    ((¬ Erdos11Conjecture → P) ↔ (¬ Erdos11Conjecture → Q)) := by
+  rw [neg_force_false_target_iff_erdos11 hP, neg_force_false_target_iff_erdos11 hQ]
+
+lemma force_target_iff_not_unbounded_odd_counterexamples_of_not_target_of_unbounded {P : Prop}
+    (hNotP : (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → ¬ P) :
+    ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  constructor
+  · intro hForce hUnbounded
+    exact hNotP hUnbounded (hForce hUnbounded)
+  · intro hNo hUnbounded
+    exact False.elim (hNo hUnbounded)
+
+lemma force_target_iff_erdos11_of_not_target_of_unbounded {P : Prop}
+    (hNotP : (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → ¬ P) :
+    ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      Erdos11Conjecture := by
+  constructor
+  · intro hForce
+    by_contra hNot
+    exact hNotP
+      (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot)
+      (hForce (not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mp hNot))
+  · exact unbounded_counterexamples_elim_of_erdos11
+
+lemma force_targets_iff_of_not_targets_of_unbounded {P Q : Prop}
+    (hNotP : (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → ¬ P)
+    (hNotQ : (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → ¬ Q) :
+    (((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → P) ↔
+      ((∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) → Q)) := by
+  rw [force_target_iff_not_unbounded_odd_counterexamples_of_not_target_of_unbounded hNotP,
+    force_target_iff_not_unbounded_odd_counterexamples_of_not_target_of_unbounded hNotQ]
+
 /-- Candidate exponents bounded by `log_2 n` and satisfying `2^k < n`. -/
 def candidateExponents (n : Nat) : Finset Nat :=
   (Finset.range (Nat.log 2 n + 1)).filter (fun k => 2 ^ k < n)
@@ -160,20 +244,6 @@ lemma verifiedUpTo_of_solverSucceedsUpTo (B : Nat) (h : solverSucceedsUpTo B = t
   exact represents_of_findExponent_isSome
     (solverSucceedsUpTo_spec h n (mem_oddCandidates_of_bounds h3 hB hodd))
 
-/--
-Executable finite verification result:
-the solver is certified for every odd `n` with `3 <= n <= 2^20`.
--/
-lemma solverSucceedsUpTo_2pow20 : solverSucceedsUpTo (2 ^ 20) = true := by
-  native_decide
-
-/--
-Formal finite theorem:
-for every odd `n` with `3 <= n <= 2^20`, `Represents n` holds.
--/
-lemma verifiedUpTo_2pow20 : VerifiedUpTo (2 ^ 20) :=
-  verifiedUpTo_of_solverSucceedsUpTo (2 ^ 20) solverSucceedsUpTo_2pow20
-
 namespace AsymptoticGraph
 
 /-- D1: logarithmic scale parameter. -/
@@ -206,6 +276,28 @@ noncomputable def smallPrimeBad (n z : Nat) : Finset Nat := by
 /-- L1: local counting function for a fixed prime `p`. -/
 def Np (n p : Nat) : Nat :=
   ((K n).filter (fun k => (M n k) % (p ^ 2) = 0)).card
+
+/-- Explicit square-divisibility fiber for a fixed prime `p`. -/
+noncomputable def badAtSq (n p : Nat) : Finset Nat := by
+  classical
+  exact (K n).filter (fun k => (M n k) % (p ^ 2) = 0)
+
+lemma card_badAtSq_eq_Np (n p : Nat) : (badAtSq n p).card = Np n p := by
+  classical
+  simp [badAtSq, Np]
+
+/-- Clean square-divisibility fiber: exponents surviving the small-prime sieve and lying in `badAtSq`. -/
+noncomputable def cleanBadAtSq (n z0 p : Nat) : Finset Nat := by
+  classical
+  exact (A n z0).filter (fun k => (M n k) % (p ^ 2) = 0)
+
+/-- Local clean count for a fixed prime `p`. -/
+noncomputable def cleanNp (n z0 p : Nat) : Nat :=
+  (cleanBadAtSq n z0 p).card
+
+lemma card_cleanBadAtSq_eq_cleanNp (n z0 p : Nat) :
+    (cleanBadAtSq n z0 p).card = cleanNp n z0 p := by
+  rfl
 
 /-- Cutoff used in the split between small and large primes. -/
 def z (n : Nat) : Nat := L n / 2
@@ -375,11 +467,771 @@ noncomputable def largePrimeSupportSq (n : Nat) : Finset Nat := by
   classical
   exact (largePrimeSupport n).filter (fun p => p ^ 2 <= n)
 
+/-- Base-2 Wieferich condition at `p`: `2^(p-1) ≡ 1 [MOD p^2]`. -/
+def WieferichBase2 (p : Nat) : Prop :=
+  2 ^ (p - 1) ≡ 1 [MOD p ^ 2]
+
+/-- Large-prime square support split by the base-2 Wieferich condition. -/
+noncomputable def wieferichLargePrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter WieferichBase2
+
+/-- Complementary large-prime square support: primes failing the base-2 Wieferich condition. -/
+noncomputable def nonWieferichLargePrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => ¬ WieferichBase2 p)
+
+lemma wieferichLargePrimeSupportSq_subset (n : Nat) :
+    wieferichLargePrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma nonWieferichLargePrimeSupportSq_subset (n : Nat) :
+    nonWieferichLargePrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma card_wieferich_add_card_nonWieferichLargePrimeSupportSq (n : Nat) :
+    (wieferichLargePrimeSupportSq n).card + (nonWieferichLargePrimeSupportSq n).card =
+      (largePrimeSupportSq n).card := by
+  classical
+  simpa [wieferichLargePrimeSupportSq, nonWieferichLargePrimeSupportSq] using
+    (Finset.card_filter_add_card_filter_not
+      (s := largePrimeSupportSq n) (p := WieferichBase2))
+
+/-- Active square-range large primes: those with nonzero local count `Np`. -/
+noncomputable def largePrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => Np n p ≠ 0)
+
+/-- Active square-range large primes satisfying the base-2 Wieferich condition. -/
+noncomputable def wieferichLargePrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeActiveSupportSq n).filter WieferichBase2
+
+/-- Active square-range large primes failing the base-2 Wieferich condition. -/
+noncomputable def nonWieferichLargePrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeActiveSupportSq n).filter (fun p => ¬ WieferichBase2 p)
+
+lemma largePrimeActiveSupportSq_subset (n : Nat) :
+    largePrimeActiveSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma wieferichLargePrimeActiveSupportSq_subset (n : Nat) :
+    wieferichLargePrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma nonWieferichLargePrimeActiveSupportSq_subset (n : Nat) :
+    nonWieferichLargePrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma wieferichLargePrimeActiveSupportSq_subset_wieferichLargePrimeSupportSq (n : Nat) :
+    wieferichLargePrimeActiveSupportSq n ⊆ wieferichLargePrimeSupportSq n := by
+  classical
+  intro p hp
+  have hpAct : p ∈ largePrimeActiveSupportSq n := (Finset.mem_filter.mp hp).1
+  have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+  exact Finset.mem_filter.mpr ⟨hpSq, (Finset.mem_filter.mp hp).2⟩
+
+lemma nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq (n : Nat) :
+    nonWieferichLargePrimeActiveSupportSq n ⊆ nonWieferichLargePrimeSupportSq n := by
+  classical
+  intro p hp
+  have hpAct : p ∈ largePrimeActiveSupportSq n := (Finset.mem_filter.mp hp).1
+  have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+  exact Finset.mem_filter.mpr ⟨hpSq, (Finset.mem_filter.mp hp).2⟩
+
+lemma card_wieferich_add_card_nonWieferichLargePrimeActiveSupportSq (n : Nat) :
+    (wieferichLargePrimeActiveSupportSq n).card +
+        (nonWieferichLargePrimeActiveSupportSq n).card =
+      (largePrimeActiveSupportSq n).card := by
+  classical
+  simpa [wieferichLargePrimeActiveSupportSq, nonWieferichLargePrimeActiveSupportSq] using
+    (Finset.card_filter_add_card_filter_not
+      (s := largePrimeActiveSupportSq n) (p := WieferichBase2))
+
+/-- Clean square-range large primes: those contributing to the clean set `A n (z n)`. -/
+noncomputable def largePrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => cleanNp n (z n) p ≠ 0)
+
+/-- Clean square-range large primes satisfying the base-2 Wieferich condition. -/
+noncomputable def wieferichLargePrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeCleanSupportSq n).filter WieferichBase2
+
+/-- Clean square-range large primes failing the base-2 Wieferich condition. -/
+noncomputable def nonWieferichLargePrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeCleanSupportSq n).filter (fun p => ¬ WieferichBase2 p)
+
+lemma largePrimeCleanSupportSq_subset (n : Nat) :
+    largePrimeCleanSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma wieferichLargePrimeCleanSupportSq_subset (n : Nat) :
+    wieferichLargePrimeCleanSupportSq n ⊆ largePrimeCleanSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma nonWieferichLargePrimeCleanSupportSq_subset (n : Nat) :
+    nonWieferichLargePrimeCleanSupportSq n ⊆ largePrimeCleanSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma card_wieferich_add_card_nonWieferichLargePrimeCleanSupportSq (n : Nat) :
+    (wieferichLargePrimeCleanSupportSq n).card +
+        (nonWieferichLargePrimeCleanSupportSq n).card =
+      (largePrimeCleanSupportSq n).card := by
+  classical
+  simpa [wieferichLargePrimeCleanSupportSq, nonWieferichLargePrimeCleanSupportSq] using
+    (Finset.card_filter_add_card_filter_not
+      (s := largePrimeCleanSupportSq n) (p := WieferichBase2))
+
+/--
+Very large active square-range primes: `p^4 > n`.
+Two distinct such primes cannot both divide the same `M n k` to square order.
+-/
+noncomputable def veryLargePrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeActiveSupportSq n).filter (fun p => n < p ^ 4)
+
+/-- Complementary active square-range primes with `p^4 <= n`. -/
+noncomputable def lowFourthPrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeActiveSupportSq n).filter (fun p => p ^ 4 <= n)
+
+/-- Very large clean square-range primes: `p^4 > n`. -/
+noncomputable def veryLargePrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeCleanSupportSq n).filter (fun p => n < p ^ 4)
+
+/-- Complementary clean square-range primes with `p^4 <= n`. -/
+noncomputable def lowFourthPrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeCleanSupportSq n).filter (fun p => p ^ 4 <= n)
+
+/-- Low-fourth clean square-range primes satisfying the base-2 Wieferich condition. -/
+noncomputable def wieferichLowFourthPrimeCleanSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (lowFourthPrimeCleanSupportSq n).filter WieferichBase2
+
+/--
+Higher large-prime square range with `p^6 > n`.
+For a fixed exponent `k`, at most two such primes can divide `M n k` to square order.
+-/
+noncomputable def highSixthPrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => n < p ^ 6)
+
+/--
+Higher large-prime square range with `p^5 > n`.
+For a fixed exponent `k`, at most two such primes can divide `M n k` to square order.
+-/
+noncomputable def highFifthPrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => n < p ^ 5)
+
+/-- Complementary square-range large primes with `p^5 <= n`. -/
+noncomputable def lowFifthPrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => p ^ 5 <= n)
+
+/-- Active low-fifth square-range large primes. -/
+noncomputable def lowFifthPrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (lowFifthPrimeSupportSq n).filter (fun p => Np n p ≠ 0)
+
+/-- Active low-fifth square-range large primes satisfying the base-2 Wieferich condition. -/
+noncomputable def wieferichLowFifthPrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (lowFifthPrimeActiveSupportSq n).filter WieferichBase2
+
+/-- Complementary square-range large primes with `p^6 <= n`. -/
+noncomputable def lowSixthPrimeSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (largePrimeSupportSq n).filter (fun p => p ^ 6 <= n)
+
+/-- Active low-sixth square-range large primes. -/
+noncomputable def lowSixthPrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (lowSixthPrimeSupportSq n).filter (fun p => Np n p ≠ 0)
+
+/-- Active low-sixth square-range large primes satisfying the base-2 Wieferich condition. -/
+noncomputable def wieferichLowSixthPrimeActiveSupportSq (n : Nat) : Finset Nat := by
+  classical
+  exact (lowSixthPrimeActiveSupportSq n).filter WieferichBase2
+
+lemma veryLargePrimeActiveSupportSq_subset (n : Nat) :
+    veryLargePrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma lowFourthPrimeActiveSupportSq_subset (n : Nat) :
+    lowFourthPrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma veryLargePrimeCleanSupportSq_subset (n : Nat) :
+    veryLargePrimeCleanSupportSq n ⊆ largePrimeCleanSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma lowFourthPrimeCleanSupportSq_subset (n : Nat) :
+    lowFourthPrimeCleanSupportSq n ⊆ largePrimeCleanSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma highSixthPrimeSupportSq_subset (n : Nat) :
+    highSixthPrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma highFifthPrimeSupportSq_subset (n : Nat) :
+    highFifthPrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma lowFifthPrimeSupportSq_subset (n : Nat) :
+    lowFifthPrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma lowFifthPrimeActiveSupportSq_subset (n : Nat) :
+    lowFifthPrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  rcases Finset.mem_filter.mp hp with ⟨hpLow, hNp⟩
+  exact Finset.mem_filter.mpr ⟨lowFifthPrimeSupportSq_subset n hpLow, hNp⟩
+
+lemma lowSixthPrimeSupportSq_subset (n : Nat) :
+    lowSixthPrimeSupportSq n ⊆ largePrimeSupportSq n := by
+  classical
+  intro p hp
+  exact (Finset.mem_filter.mp hp).1
+
+lemma lowSixthPrimeActiveSupportSq_subset (n : Nat) :
+    lowSixthPrimeActiveSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  rcases Finset.mem_filter.mp hp with ⟨hpLow, hNp⟩
+  exact Finset.mem_filter.mpr ⟨lowSixthPrimeSupportSq_subset n hpLow, hNp⟩
+
+lemma card_veryLarge_add_card_lowFourthPrimeActiveSupportSq (n : Nat) :
+    (veryLargePrimeActiveSupportSq n).card + (lowFourthPrimeActiveSupportSq n).card =
+      (largePrimeActiveSupportSq n).card := by
+  classical
+  simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+    (Finset.card_filter_add_card_filter_not
+      (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4))
+
+lemma card_veryLarge_add_card_lowFourthPrimeCleanSupportSq (n : Nat) :
+    (veryLargePrimeCleanSupportSq n).card + (lowFourthPrimeCleanSupportSq n).card =
+      (largePrimeCleanSupportSq n).card := by
+  classical
+  simpa [veryLargePrimeCleanSupportSq, lowFourthPrimeCleanSupportSq] using
+    (Finset.card_filter_add_card_filter_not
+      (s := largePrimeCleanSupportSq n) (p := fun p => n < p ^ 4))
+
 /-- Size bound for the exponent window. -/
 lemma card_K_le (n : Nat) : (K n).card <= L n + 1 := by
   unfold K L candidateExponents
   simpa using (Finset.card_filter_le (s := Finset.range (Nat.log 2 n + 1))
     (p := fun k => 2 ^ k < n))
+
+lemma prime_of_mem_largePrimeSupportSq {n p : Nat} (hpS : p ∈ largePrimeSupportSq n) :
+    Nat.Prime p := by
+  exact (Finset.mem_filter.mp ((Finset.mem_filter.mp hpS).1)).2
+
+lemma prime_of_mem_largePrimeActiveSupportSq {n p : Nat} (hpS : p ∈ largePrimeActiveSupportSq n) :
+    Nat.Prime p := by
+  exact prime_of_mem_largePrimeSupportSq (largePrimeActiveSupportSq_subset n hpS)
+
+lemma badAtSq_nonempty_of_mem_largePrimeActiveSupportSq {n p : Nat}
+    (hpS : p ∈ largePrimeActiveSupportSq n) :
+    (badAtSq n p).Nonempty := by
+  have hNpNe : Np n p ≠ 0 := (Finset.mem_filter.mp hpS).2
+  have hcardNe : (badAtSq n p).card ≠ 0 := by simpa [card_badAtSq_eq_Np n p] using hNpNe
+  exact Finset.card_ne_zero.mp hcardNe
+
+lemma disjoint_badAtSq_of_mem_veryLargePrimeActiveSupportSq {n p q : Nat}
+    (hpS : p ∈ veryLargePrimeActiveSupportSq n)
+    (hqS : q ∈ veryLargePrimeActiveSupportSq n)
+    (hpq : p ≠ q) :
+    Disjoint (badAtSq n p) (badAtSq n q) := by
+  classical
+  refine Finset.disjoint_left.2 ?_
+  intro k hkP hkQ
+  have hkK : k ∈ K n := (Finset.mem_filter.mp hkP).1
+  have hpdvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hkP).2
+  have hqdvd : q ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hkQ).2
+  have hpPrime : Nat.Prime p := prime_of_mem_largePrimeActiveSupportSq ((Finset.mem_filter.mp hpS).1)
+  have hqPrime : Nat.Prime q := prime_of_mem_largePrimeActiveSupportSq ((Finset.mem_filter.mp hqS).1)
+  have hpqcop : Nat.Coprime p q := by
+    exact (Nat.Prime.coprime_iff_not_dvd hpPrime).2 (by
+      intro hdiv
+      rcases (Nat.dvd_prime hqPrime).1 hdiv with h1 | h2
+      · exact hpPrime.ne_one h1
+      · exact hpq h2)
+  have hcop_p_qsq : Nat.Coprime p (q ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) p q).2 hpqcop
+  have hcop_qsq_psq : Nat.Coprime (q ^ 2) (p ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) (q ^ 2) p).2 hcop_p_qsq.symm
+  have hcop : Nat.Coprime (p ^ 2) (q ^ 2) := hcop_qsq_psq.symm
+  have hprodDvd : p ^ 2 * q ^ 2 ∣ M n k := hcop.mul_dvd_of_dvd_of_dvd hpdvd hqdvd
+  have hp4 : n < p ^ 4 := (Finset.mem_filter.mp hpS).2
+  have hq4 : n < q ^ 4 := (Finset.mem_filter.mp hqS).2
+  have hprodGt : n < p ^ 2 * q ^ 2 := by
+    rcases le_total p q with hpqle | hqple
+    · have hsq : p ^ 2 <= q ^ 2 := by
+        simpa [pow_two] using Nat.mul_le_mul hpqle hpqle
+      have hp4le : p ^ 4 <= p ^ 2 * q ^ 2 := by
+        have hmul : p ^ 2 * p ^ 2 <= p ^ 2 * q ^ 2 := Nat.mul_le_mul_left (p ^ 2) hsq
+        ring_nf at hmul
+        ring_nf
+        exact hmul
+      exact lt_of_lt_of_le hp4 hp4le
+    · have hsq : q ^ 2 <= p ^ 2 := by
+        simpa [pow_two] using Nat.mul_le_mul hqple hqple
+      have hq4le : q ^ 4 <= p ^ 2 * q ^ 2 := by
+        have hmul : q ^ 2 * q ^ 2 <= p ^ 2 * q ^ 2 := Nat.mul_le_mul_right (q ^ 2) hsq
+        ring_nf at hmul
+        ring_nf
+        exact hmul
+      exact lt_of_lt_of_le hq4 hq4le
+  have hmLe : M n k <= n := by
+    unfold M
+    exact Nat.sub_le n (2 ^ k)
+  have hprodLe : p ^ 2 * q ^ 2 <= M n k := Nat.le_of_dvd (Nat.sub_pos_of_lt (C1 hkK)) hprodDvd
+  exact (Nat.lt_irrefl n) (lt_of_lt_of_le hprodGt (le_trans hprodLe hmLe))
+
+lemma card_veryLargePrimeActiveSupportSq_le_cardK (n : Nat) :
+    (veryLargePrimeActiveSupportSq n).card <= (K n).card := by
+  classical
+  let S := veryLargePrimeActiveSupportSq n
+  have hsum :
+      S.card <= Finset.sum S (fun p => (badAtSq n p).card) := by
+    calc
+      S.card = Finset.sum S (fun _ => 1) := by simp
+      _ <= Finset.sum S (fun p => (badAtSq n p).card) := by
+        exact Finset.sum_le_sum (by
+          intro p hp
+          have hne : (badAtSq n p).Nonempty := badAtSq_nonempty_of_mem_largePrimeActiveSupportSq
+            (veryLargePrimeActiveSupportSq_subset n hp)
+          exact Nat.succ_le_of_lt (Finset.card_pos.mpr hne))
+  have hpair : (↑S : Set Nat).PairwiseDisjoint (badAtSq n) := by
+    intro p hp q hq hpq
+    exact disjoint_badAtSq_of_mem_veryLargePrimeActiveSupportSq hp hq hpq
+  have hsubset :
+      S.biUnion (badAtSq n) ⊆ K n := by
+    intro k hk
+    rcases Finset.mem_biUnion.mp hk with ⟨p, hp, hkBad⟩
+    exact (Finset.mem_filter.mp hkBad).1
+  calc
+    S.card <= Finset.sum S (fun p => (badAtSq n p).card) := hsum
+    _ = (S.biUnion (badAtSq n)).card := by symm; exact Finset.card_biUnion hpair
+    _ <= (K n).card := Finset.card_le_card hsubset
+
+lemma sum_Np_veryLargePrimeActiveSupportSq_le_cardK (n : Nat) :
+    Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) <= (K n).card := by
+  classical
+  let S := veryLargePrimeActiveSupportSq n
+  have hpair : (↑S : Set Nat).PairwiseDisjoint (badAtSq n) := by
+    intro p hp q hq hpq
+    exact disjoint_badAtSq_of_mem_veryLargePrimeActiveSupportSq hp hq hpq
+  have hsubset :
+      S.biUnion (badAtSq n) ⊆ K n := by
+    intro k hk
+    rcases Finset.mem_biUnion.mp hk with ⟨p, hp, hkBad⟩
+    exact (Finset.mem_filter.mp hkBad).1
+  calc
+    Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum S (fun p => (badAtSq n p).card) := by
+          simp [S, card_badAtSq_eq_Np]
+    _ = (S.biUnion (badAtSq n)).card := by
+          symm
+          exact Finset.card_biUnion hpair
+    _ <= (K n).card := Finset.card_le_card hsubset
+
+lemma card_veryLargePrimeActiveSupportSq_le_L_add_one (n : Nat) :
+    (veryLargePrimeActiveSupportSq n).card <= L n + 1 := by
+  exact le_trans (card_veryLargePrimeActiveSupportSq_le_cardK n) (card_K_le n)
+
+lemma card_largePrimeActiveSupportSq_le_lowFourth_add_L_add_one (n : Nat) :
+    (largePrimeActiveSupportSq n).card <=
+      (lowFourthPrimeActiveSupportSq n).card + (L n + 1) := by
+  calc
+    (largePrimeActiveSupportSq n).card =
+        (veryLargePrimeActiveSupportSq n).card + (lowFourthPrimeActiveSupportSq n).card := by
+          symm
+          exact card_veryLarge_add_card_lowFourthPrimeActiveSupportSq n
+    _ <= (L n + 1) + (lowFourthPrimeActiveSupportSq n).card := by
+          exact Nat.add_le_add_right (card_veryLargePrimeActiveSupportSq_le_L_add_one n) _
+    _ = (lowFourthPrimeActiveSupportSq n).card + (L n + 1) := by ac_rfl
+
+lemma coprime_sq_sq_of_distinct_primes {p q : Nat}
+    (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) :
+    Nat.Coprime (p ^ 2) (q ^ 2) := by
+  have hpqcop : Nat.Coprime p q := by
+    exact (Nat.Prime.coprime_iff_not_dvd hp).2 (by
+      intro hdiv
+      rcases (Nat.dvd_prime hq).1 hdiv with h1 | h2
+      · exact hp.ne_one h1
+      · exact hpq h2)
+  have hcop_p_qsq : Nat.Coprime p (q ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) p q).2 hpqcop
+  have hcop_qsq_psq : Nat.Coprime (q ^ 2) (p ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) (q ^ 2) p).2 hcop_p_qsq.symm
+  exact hcop_qsq_psq.symm
+
+lemma pow_six_le_sq_triprod_of_le_le {p q r : Nat}
+    (hpq : p <= q) (hpr : p <= r) :
+    p ^ 6 <= p ^ 2 * q ^ 2 * r ^ 2 := by
+  have hsqpq : p ^ 2 <= q ^ 2 := by
+    simpa [pow_two] using Nat.mul_le_mul hpq hpq
+  have hsqpr : p ^ 2 <= r ^ 2 := by
+    simpa [pow_two] using Nat.mul_le_mul hpr hpr
+  calc
+    p ^ 6 = (p ^ 2 * p ^ 2) * p ^ 2 := by
+      rw [show (6 : Nat) = 2 + 2 + 2 by decide, Nat.pow_add, Nat.pow_add]
+    _ <= (p ^ 2 * q ^ 2) * p ^ 2 := by
+      exact Nat.mul_le_mul_right (p ^ 2) (Nat.mul_le_mul_left (p ^ 2) hsqpq)
+    _ <= (p ^ 2 * q ^ 2) * r ^ 2 := by
+      exact Nat.mul_le_mul_left (p ^ 2 * q ^ 2) hsqpr
+    _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl
+
+lemma pow_five_le_pow_six_of_one_le {p : Nat} (hp1 : 1 <= p) : p ^ 5 <= p ^ 6 := by
+  calc
+    p ^ 5 = p ^ 5 * 1 := by simp
+    _ <= p ^ 5 * p := Nat.mul_le_mul_left (p ^ 5) hp1
+    _ = p ^ 6 := by
+      rw [show (6 : Nat) = 5 + 1 by decide, Nat.pow_add]
+      simp [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc]
+
+lemma card_highFifthPrimeSupportSq_filter_badAtSq_le_two (n k : Nat) :
+    ((highFifthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card <= 2 := by
+  classical
+  by_contra hcard
+  have hgt :
+      2 < ((highFifthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card :=
+    lt_of_not_ge hcard
+  rcases Finset.two_lt_card.mp hgt with ⟨p, hp, q, hq, r, hr, hpq, hpr, hqr⟩
+  have hpHigh : p ∈ highFifthPrimeSupportSq n := (Finset.mem_filter.mp hp).1
+  have hqHigh : q ∈ highFifthPrimeSupportSq n := (Finset.mem_filter.mp hq).1
+  have hrHigh : r ∈ highFifthPrimeSupportSq n := (Finset.mem_filter.mp hr).1
+  have hpk : k ∈ badAtSq n p := (Finset.mem_filter.mp hp).2
+  have hqk : k ∈ badAtSq n q := (Finset.mem_filter.mp hq).2
+  have hrk : k ∈ badAtSq n r := (Finset.mem_filter.mp hr).2
+  have hkK : k ∈ K n := (Finset.mem_filter.mp hpk).1
+  have hpdvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hpk).2
+  have hqdvd : q ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hqk).2
+  have hrdvd : r ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hrk).2
+  have hpPrime : Nat.Prime p := prime_of_mem_largePrimeSupportSq (highFifthPrimeSupportSq_subset n hpHigh)
+  have hqPrime : Nat.Prime q := prime_of_mem_largePrimeSupportSq (highFifthPrimeSupportSq_subset n hqHigh)
+  have hrPrime : Nat.Prime r := prime_of_mem_largePrimeSupportSq (highFifthPrimeSupportSq_subset n hrHigh)
+  have hcopPQ : Nat.Coprime (p ^ 2) (q ^ 2) := coprime_sq_sq_of_distinct_primes hpPrime hqPrime hpq
+  have hcopPR : Nat.Coprime (p ^ 2) (r ^ 2) := coprime_sq_sq_of_distinct_primes hpPrime hrPrime hpr
+  have hcopQR : Nat.Coprime (q ^ 2) (r ^ 2) := coprime_sq_sq_of_distinct_primes hqPrime hrPrime hqr
+  have hpqDvd : p ^ 2 * q ^ 2 ∣ M n k := hcopPQ.mul_dvd_of_dvd_of_dvd hpdvd hqdvd
+  have hcopPQr : Nat.Coprime (p ^ 2 * q ^ 2) (r ^ 2) := by
+    rw [Nat.coprime_mul_iff_left]
+    exact ⟨hcopPR, hcopQR⟩
+  have hprodDvd : p ^ 2 * q ^ 2 * r ^ 2 ∣ M n k := hcopPQr.mul_dvd_of_dvd_of_dvd hpqDvd hrdvd
+  have hp5 : n < p ^ 5 := (Finset.mem_filter.mp hpHigh).2
+  have hq5 : n < q ^ 5 := (Finset.mem_filter.mp hqHigh).2
+  have hr5 : n < r ^ 5 := (Finset.mem_filter.mp hrHigh).2
+  have hprodGt : n < p ^ 2 * q ^ 2 * r ^ 2 := by
+    rcases le_total p q with hpqle | hqple
+    · rcases le_total p r with hprle | hrple
+      · have hp1 : 1 <= p := Nat.succ_le_of_lt hpPrime.pos
+        exact lt_of_lt_of_le hp5
+          (le_trans (pow_five_le_pow_six_of_one_le hp1)
+            (pow_six_le_sq_triprod_of_le_le hpqle hprle))
+      · have hrple' : r <= p := hrple
+        have hrqle : r <= q := le_trans hrple' hpqle
+        have hr1 : 1 <= r := Nat.succ_le_of_lt hrPrime.pos
+        exact lt_of_lt_of_le hr5
+          (le_trans (pow_five_le_pow_six_of_one_le hr1)
+            (by
+              calc
+                r ^ 6 <= r ^ 2 * p ^ 2 * q ^ 2 := pow_six_le_sq_triprod_of_le_le hrple' hrqle
+                _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl))
+    · have hqple' : q <= p := hqple
+      rcases le_total q r with hqrle | hrqle
+      · have hq1 : 1 <= q := Nat.succ_le_of_lt hqPrime.pos
+        exact lt_of_lt_of_le hq5
+          (le_trans (pow_five_le_pow_six_of_one_le hq1)
+            (by
+              calc
+                q ^ 6 <= q ^ 2 * p ^ 2 * r ^ 2 := pow_six_le_sq_triprod_of_le_le hqple' hqrle
+                _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl))
+      · have hrqle' : r <= q := hrqle
+        have hrple : r <= p := le_trans hrqle' hqple'
+        have hr1 : 1 <= r := Nat.succ_le_of_lt hrPrime.pos
+        exact lt_of_lt_of_le hr5
+          (le_trans (pow_five_le_pow_six_of_one_le hr1)
+            (by
+              calc
+                r ^ 6 <= r ^ 2 * p ^ 2 * q ^ 2 := pow_six_le_sq_triprod_of_le_le hrple hrqle'
+                _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl))
+  have hmLe : M n k <= n := by
+    unfold M
+    exact Nat.sub_le n (2 ^ k)
+  have hprodLe : p ^ 2 * q ^ 2 * r ^ 2 <= M n k := by
+    exact Nat.le_of_dvd (Nat.sub_pos_of_lt (C1 hkK)) hprodDvd
+  exact (Nat.lt_irrefl n) (lt_of_lt_of_le hprodGt (le_trans hprodLe hmLe))
+
+lemma card_highSixthPrimeSupportSq_filter_badAtSq_le_two (n k : Nat) :
+    ((highSixthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card <= 2 := by
+  classical
+  by_contra hcard
+  have hgt :
+      2 < ((highSixthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card :=
+    lt_of_not_ge hcard
+  rcases Finset.two_lt_card.mp hgt with ⟨p, hp, q, hq, r, hr, hpq, hpr, hqr⟩
+  have hpHigh : p ∈ highSixthPrimeSupportSq n := (Finset.mem_filter.mp hp).1
+  have hqHigh : q ∈ highSixthPrimeSupportSq n := (Finset.mem_filter.mp hq).1
+  have hrHigh : r ∈ highSixthPrimeSupportSq n := (Finset.mem_filter.mp hr).1
+  have hpk : k ∈ badAtSq n p := (Finset.mem_filter.mp hp).2
+  have hqk : k ∈ badAtSq n q := (Finset.mem_filter.mp hq).2
+  have hrk : k ∈ badAtSq n r := (Finset.mem_filter.mp hr).2
+  have hkK : k ∈ K n := (Finset.mem_filter.mp hpk).1
+  have hpdvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hpk).2
+  have hqdvd : q ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hqk).2
+  have hrdvd : r ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 (Finset.mem_filter.mp hrk).2
+  have hpPrime : Nat.Prime p := prime_of_mem_largePrimeSupportSq (highSixthPrimeSupportSq_subset n hpHigh)
+  have hqPrime : Nat.Prime q := prime_of_mem_largePrimeSupportSq (highSixthPrimeSupportSq_subset n hqHigh)
+  have hrPrime : Nat.Prime r := prime_of_mem_largePrimeSupportSq (highSixthPrimeSupportSq_subset n hrHigh)
+  have hcopPQ : Nat.Coprime (p ^ 2) (q ^ 2) := coprime_sq_sq_of_distinct_primes hpPrime hqPrime hpq
+  have hcopPR : Nat.Coprime (p ^ 2) (r ^ 2) := coprime_sq_sq_of_distinct_primes hpPrime hrPrime hpr
+  have hcopQR : Nat.Coprime (q ^ 2) (r ^ 2) := coprime_sq_sq_of_distinct_primes hqPrime hrPrime hqr
+  have hpqDvd : p ^ 2 * q ^ 2 ∣ M n k := hcopPQ.mul_dvd_of_dvd_of_dvd hpdvd hqdvd
+  have hcopPQr : Nat.Coprime (p ^ 2 * q ^ 2) (r ^ 2) := by
+    rw [Nat.coprime_mul_iff_left]
+    exact ⟨hcopPR, hcopQR⟩
+  have hprodDvd : p ^ 2 * q ^ 2 * r ^ 2 ∣ M n k := hcopPQr.mul_dvd_of_dvd_of_dvd hpqDvd hrdvd
+  have hp6 : n < p ^ 6 := (Finset.mem_filter.mp hpHigh).2
+  have hq6 : n < q ^ 6 := (Finset.mem_filter.mp hqHigh).2
+  have hr6 : n < r ^ 6 := (Finset.mem_filter.mp hrHigh).2
+  have hp6eq : p ^ 6 = (p ^ 2 * p ^ 2) * p ^ 2 := by
+    rw [show (6 : Nat) = 2 + 2 + 2 by decide, Nat.pow_add, Nat.pow_add]
+  have hq6eq : q ^ 6 = (q ^ 2 * q ^ 2) * q ^ 2 := by
+    rw [show (6 : Nat) = 2 + 2 + 2 by decide, Nat.pow_add, Nat.pow_add]
+  have hr6eq : r ^ 6 = (r ^ 2 * r ^ 2) * r ^ 2 := by
+    rw [show (6 : Nat) = 2 + 2 + 2 by decide, Nat.pow_add, Nat.pow_add]
+  have hprodGt : n < p ^ 2 * q ^ 2 * r ^ 2 := by
+    rcases le_total p q with hpqle | hqple
+    · rcases le_total p r with hprle | hrple
+      · have hsqpq : p ^ 2 <= q ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hpqle hpqle
+        have hsqpr : p ^ 2 <= r ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hprle hprle
+        have hp6le : p ^ 6 <= p ^ 2 * q ^ 2 * r ^ 2 := by
+          calc
+            p ^ 6 = (p ^ 2 * p ^ 2) * p ^ 2 := hp6eq
+            _ <= (p ^ 2 * q ^ 2) * p ^ 2 := Nat.mul_le_mul_right (p ^ 2)
+                  (Nat.mul_le_mul_left (p ^ 2) hsqpq)
+            _ <= (p ^ 2 * q ^ 2) * r ^ 2 := Nat.mul_le_mul_left (p ^ 2 * q ^ 2) hsqpr
+            _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl
+        exact lt_of_lt_of_le hp6 hp6le
+      · have hrple' : r <= p := hrple
+        have hrqle : r <= q := le_trans hrple' hpqle
+        have hsqrp : r ^ 2 <= p ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hrple' hrple'
+        have hsqrq : r ^ 2 <= q ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hrqle hrqle
+        have hr6le : r ^ 6 <= p ^ 2 * q ^ 2 * r ^ 2 := by
+          calc
+            r ^ 6 = (r ^ 2 * r ^ 2) * r ^ 2 := hr6eq
+            _ <= (p ^ 2 * r ^ 2) * r ^ 2 := Nat.mul_le_mul_right (r ^ 2)
+                  (Nat.mul_le_mul_right (r ^ 2) hsqrp)
+            _ <= (p ^ 2 * q ^ 2) * r ^ 2 := Nat.mul_le_mul_right (r ^ 2)
+                  (Nat.mul_le_mul_left (p ^ 2) hsqrq)
+            _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl
+        exact lt_of_lt_of_le hr6 hr6le
+    · have hqple' : q <= p := hqple
+      rcases le_total q r with hqrle | hrqle
+      · have hsqqp : q ^ 2 <= p ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hqple' hqple'
+        have hsqqr : q ^ 2 <= r ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hqrle hqrle
+        have hq6le : q ^ 6 <= p ^ 2 * q ^ 2 * r ^ 2 := by
+          calc
+            q ^ 6 = (q ^ 2 * q ^ 2) * q ^ 2 := hq6eq
+            _ <= (p ^ 2 * q ^ 2) * q ^ 2 := Nat.mul_le_mul_right (q ^ 2)
+                  (Nat.mul_le_mul_right (q ^ 2) hsqqp)
+            _ <= (p ^ 2 * q ^ 2) * r ^ 2 := Nat.mul_le_mul_left (p ^ 2 * q ^ 2) hsqqr
+            _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl
+        exact lt_of_lt_of_le hq6 hq6le
+      · have hrqle' : r <= q := hrqle
+        have hrple : r <= p := le_trans hrqle' hqple'
+        have hsqrp : r ^ 2 <= p ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hrple hrple
+        have hsqrq : r ^ 2 <= q ^ 2 := by
+          simpa [pow_two] using Nat.mul_le_mul hrqle' hrqle'
+        have hr6le : r ^ 6 <= p ^ 2 * q ^ 2 * r ^ 2 := by
+          calc
+            r ^ 6 = (r ^ 2 * r ^ 2) * r ^ 2 := hr6eq
+            _ <= (p ^ 2 * r ^ 2) * r ^ 2 := Nat.mul_le_mul_right (r ^ 2)
+                  (Nat.mul_le_mul_right (r ^ 2) hsqrp)
+            _ <= (p ^ 2 * q ^ 2) * r ^ 2 := Nat.mul_le_mul_right (r ^ 2)
+                  (Nat.mul_le_mul_left (p ^ 2) hsqrq)
+            _ = p ^ 2 * q ^ 2 * r ^ 2 := by ac_rfl
+        exact lt_of_lt_of_le hr6 hr6le
+  have hmLe : M n k <= n := by
+    unfold M
+    exact Nat.sub_le n (2 ^ k)
+  have hprodLe : p ^ 2 * q ^ 2 * r ^ 2 <= M n k := by
+    exact Nat.le_of_dvd (Nat.sub_pos_of_lt (C1 hkK)) hprodDvd
+  exact (Nat.lt_irrefl n) (lt_of_lt_of_le hprodGt (le_trans hprodLe hmLe))
+
+lemma sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK (n : Nat) :
+    Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) <= (K n).card * 2 := by
+  classical
+  let T : Finset (Sigma fun _ : Nat => Nat) := (highSixthPrimeSupportSq n).sigma (badAtSq n)
+  have hcardT :
+      T.card = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) := by
+    dsimp [T]
+    simp [card_badAtSq_eq_Np]
+  have hmaps : ∀ x : Sigma fun _ : Nat => Nat, x ∈ T → x.2 ∈ K n := by
+    intro x hx
+    have hx' : x.1 ∈ highSixthPrimeSupportSq n ∧ x.2 ∈ badAtSq n x.1 := by
+      simpa [T] using hx
+    exact (Finset.mem_filter.mp hx'.2).1
+  have hfiber : ∀ k ∈ K n, (T.filter fun x => x.2 = k).card <= 2 := by
+    intro k hk
+    have hEq :
+        (T.filter fun x => x.2 = k).card =
+          ((highSixthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card := by
+      dsimp [T]
+      refine Finset.card_bij'
+        (fun x _ => x.1)
+        (fun p _ => ⟨p, k⟩) ?_ ?_ ?_ ?_
+      · intro x hx
+        rcases Finset.mem_filter.mp hx with ⟨hxT, hxk⟩
+        rcases Finset.mem_sigma.mp hxT with ⟨hxHigh, hxBad⟩
+        exact Finset.mem_filter.mpr ⟨hxHigh, by simpa [hxk] using hxBad⟩
+      · intro p hp
+        refine Finset.mem_filter.mpr ⟨?_, rfl⟩
+        rcases Finset.mem_filter.mp hp with ⟨hpHigh, hpBad⟩
+        exact Finset.mem_sigma.mpr ⟨hpHigh, by simpa using hpBad⟩
+      · intro x hx
+        rcases x with ⟨p, l⟩
+        rcases Finset.mem_filter.mp hx with ⟨_, hlk⟩
+        cases hlk
+        rfl
+      · intro p hp
+        rfl
+    calc
+      (T.filter fun x => x.2 = k).card =
+          ((highSixthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card := hEq
+      _ <= 2 := card_highSixthPrimeSupportSq_filter_badAtSq_le_two n k
+  calc
+    Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) = T.card := by
+      symm
+      exact hcardT
+    _ = ∑ k ∈ K n, (T.filter fun x => x.2 = k).card := by
+      have hmapsTo : Set.MapsTo (fun x : Sigma fun _ : Nat => Nat => x.2)
+          (T : Set (Sigma fun _ : Nat => Nat)) (K n : Set Nat) := by
+        intro x hx
+        exact hmaps x hx
+      simpa using
+        (Finset.card_eq_sum_card_fiberwise
+          (f := fun x : Sigma fun _ : Nat => Nat => x.2) (s := T) (t := K n) hmapsTo)
+    _ <= ∑ _k ∈ K n, 2 := by
+      exact Finset.sum_le_sum hfiber
+    _ = (K n).card * 2 := by simp [Nat.mul_comm]
+
+lemma sum_Np_highFifthPrimeSupportSq_le_two_mul_cardK (n : Nat) :
+    Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) <= (K n).card * 2 := by
+  classical
+  let T : Finset (Sigma fun _ : Nat => Nat) := (highFifthPrimeSupportSq n).sigma (badAtSq n)
+  have hcardT :
+      T.card = Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) := by
+    dsimp [T]
+    simp [card_badAtSq_eq_Np]
+  have hmaps : ∀ x : Sigma fun _ : Nat => Nat, x ∈ T → x.2 ∈ K n := by
+    intro x hx
+    have hx' : x.1 ∈ highFifthPrimeSupportSq n ∧ x.2 ∈ badAtSq n x.1 := by
+      simpa [T] using hx
+    exact (Finset.mem_filter.mp hx'.2).1
+  have hfiber : ∀ k ∈ K n, (T.filter fun x => x.2 = k).card <= 2 := by
+    intro k hk
+    have hEq :
+        (T.filter fun x => x.2 = k).card =
+          ((highFifthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card := by
+      dsimp [T]
+      refine Finset.card_bij'
+        (fun x _ => x.1)
+        (fun p _ => ⟨p, k⟩) ?_ ?_ ?_ ?_
+      · intro x hx
+        rcases Finset.mem_filter.mp hx with ⟨hxT, hxk⟩
+        rcases Finset.mem_sigma.mp hxT with ⟨hxHigh, hxBad⟩
+        exact Finset.mem_filter.mpr ⟨hxHigh, by simpa [hxk] using hxBad⟩
+      · intro p hp
+        refine Finset.mem_filter.mpr ⟨?_, rfl⟩
+        rcases Finset.mem_filter.mp hp with ⟨hpHigh, hpBad⟩
+        exact Finset.mem_sigma.mpr ⟨hpHigh, by simpa using hpBad⟩
+      · intro x hx
+        rcases x with ⟨p, l⟩
+        rcases Finset.mem_filter.mp hx with ⟨_, hlk⟩
+        cases hlk
+        rfl
+      · intro p hp
+        rfl
+    calc
+      (T.filter fun x => x.2 = k).card =
+          ((highFifthPrimeSupportSq n).filter (fun p => k ∈ badAtSq n p)).card := hEq
+      _ <= 2 := card_highFifthPrimeSupportSq_filter_badAtSq_le_two n k
+  calc
+    Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) = T.card := by
+      symm
+      exact hcardT
+    _ = ∑ k ∈ K n, (T.filter fun x => x.2 = k).card := by
+      have hmapsTo : Set.MapsTo (fun x : Sigma fun _ : Nat => Nat => x.2)
+          (T : Set (Sigma fun _ : Nat => Nat)) (K n : Set Nat) := by
+        intro x hx
+        exact hmaps x hx
+      simpa using
+        (Finset.card_eq_sum_card_fiberwise
+          (f := fun x : Sigma fun _ : Nat => Nat => x.2) (s := T) (t := K n) hmapsTo)
+    _ <= ∑ _k ∈ K n, 2 := by
+      exact Finset.sum_le_sum hfiber
+    _ = (K n).card * 2 := by simp [Nat.mul_comm]
+
+lemma sum_Np_lowFifthPrimeSupportSq_eq_sum_lowFifthPrimeActiveSupportSq (n : Nat) :
+    Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) =
+      Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+  classical
+  simpa [lowFifthPrimeActiveSupportSq] using
+    (Finset.sum_filter_ne_zero (s := lowFifthPrimeSupportSq n) (f := fun p => Np n p))
+
+lemma sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq (n : Nat) :
+    Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) =
+      Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+  classical
+  simpa [lowSixthPrimeActiveSupportSq] using
+    (Finset.sum_filter_ne_zero (s := lowSixthPrimeSupportSq n) (f := fun p => Np n p))
 
 /-- Trivial local counting bound by cardinality of the search window. -/
 lemma Np_le_cardK (n p : Nat) : Np n p <= (K n).card := by
@@ -1131,6 +1983,91 @@ lemma Np_le_order_class_bound_of_prime_ne_two
     simpa [h2cop] using Np_le_order_class_bound (n := n) (p := p) h2cop hncop
 
 /--
+Order of `2` in the unit group modulo `p` (for odd prime `p`).
+-/
+noncomputable def twoOrder (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) : Nat :=
+  orderOf
+    (ZMod.unitOfCoprime 2
+      ((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm)
+
+lemma twoOrder_pos (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    0 < twoOrder p hp hpne2 := by
+  unfold twoOrder
+  exact orderOf_pos _
+
+lemma twoOrder_dvd_pred (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    twoOrder p hp hpne2 ∣ p - 1 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  have hcard : Fintype.card (Units (ZMod p)) = p - 1 := by
+    rw [ZMod.card_units_eq_totient p, Nat.totient_prime hp]
+  unfold twoOrder
+  rw [← hcard]
+  exact orderOf_dvd_card
+
+lemma twoOrder_ne_one (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    twoOrder p hp hpne2 ≠ 1 := by
+  let u : (ZMod p)ˣ :=
+    ZMod.unitOfCoprime 2
+      ((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm
+  intro hord
+  have hu1 : u = 1 := by
+    have hord' : orderOf u = 1 := by simpa [twoOrder, u] using hord
+    exact (orderOf_eq_one_iff).1 hord'
+  have hcast : ((2 : Nat) : ZMod p) = 1 := by
+    simpa [u] using congrArg (fun x : (ZMod p)ˣ => (x : ZMod p)) hu1
+  have honez : ((1 : Nat) : ZMod p) = 0 := by
+    have hsub : (2 : ZMod p) - 1 = 1 - 1 := by
+      simpa using congrArg (fun x : ZMod p => x - 1) hcast
+    calc
+      ((1 : Nat) : ZMod p) = (2 : ZMod p) - 1 := by norm_num
+      _ = 1 - 1 := hsub
+      _ = 0 := by simp
+  have hdiv1 : p ∣ 1 := (ZMod.natCast_eq_zero_iff 1 p).1 honez
+  exact hp.ne_one (Nat.dvd_one.mp hdiv1)
+
+lemma twoOrder_ne_two_of_prime_ne_three (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hpne3 : p ≠ 3) :
+    twoOrder p hp hpne2 ≠ 2 := by
+  let u : (ZMod p)ˣ :=
+    ZMod.unitOfCoprime 2
+      ((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm
+  intro hord
+  have hu2 : u ^ 2 = 1 := by
+    have hord' : orderOf u = 2 := by simpa [twoOrder, u] using hord
+    simpa [hord'] using pow_orderOf_eq_one u
+  have hpow : ((2 : ZMod p) ^ 2) = (1 : ZMod p) := by
+    simpa [u, Nat.cast_pow] using congrArg (fun x : (ZMod p)ˣ => (x : ZMod p)) hu2
+  have hthreez : ((3 : Nat) : ZMod p) = 0 := by
+    calc
+      ((3 : Nat) : ZMod p) = (2 : ZMod p) ^ 2 - 1 := by norm_num
+      _ = (1 : ZMod p) - 1 := by simp [hpow]
+      _ = 0 := by simp
+  have hdiv3 : p ∣ 3 := (ZMod.natCast_eq_zero_iff 3 p).1 hthreez
+  rcases (Nat.dvd_prime Nat.prime_three).1 hdiv3 with h1 | h3
+  · exact hp.ne_one h1
+  · exact hpne3 h3
+
+lemma three_le_twoOrder_of_prime_ne_three (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hpne3 : p ≠ 3) :
+    3 <= twoOrder p hp hpne2 := by
+  have hpos : 0 < twoOrder p hp hpne2 := twoOrder_pos p hp hpne2
+  have hne1 : twoOrder p hp hpne2 ≠ 1 := twoOrder_ne_one p hp hpne2
+  have hne2 : twoOrder p hp hpne2 ≠ 2 := twoOrder_ne_two_of_prime_ne_three p hp hpne2 hpne3
+  omega
+
+/--
 Order of `2` in the unit group modulo `p^2` (for odd prime `p`).
 -/
 noncomputable def twoOrderSq (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) : Nat :=
@@ -1181,6 +2118,180 @@ lemma twoOrderSq_ge_two (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
     intro hord1
     exact huNeOne ((orderOf_eq_one_iff).1 hord1)
   exact (Nat.two_le_iff (orderOf u)).2 ⟨Nat.ne_of_gt huPos, hordNeOne⟩
+
+lemma twoOrderSq_dvd_p_mul_pred (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    twoOrderSq p hp hpne2 ∣ p * (p - 1) := by
+  haveI : NeZero (p ^ 2) := ⟨pow_ne_zero 2 hp.ne_zero⟩
+  have hcard : Fintype.card (Units (ZMod (p ^ 2))) = p * (p - 1) := by
+    rw [ZMod.card_units_eq_totient (p ^ 2)]
+    simpa [pow_two, Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using
+      (Nat.totient_prime_pow_succ hp 1)
+  unfold twoOrderSq
+  rw [← hcard]
+  exact orderOf_dvd_card
+
+lemma sq_dvd_two_pow_twoOrderSq_sub_one
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    p ^ 2 ∣ 2 ^ twoOrderSq p hp hpne2 - 1 := by
+  let h2cop : Nat.Coprime 2 (p ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+      (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm)
+  have hu :
+      (ZMod.unitOfCoprime 2 h2cop : (ZMod (p ^ 2))ˣ) ^ twoOrderSq p hp hpne2 = 1 := by
+    unfold twoOrderSq
+    simpa using pow_orderOf_eq_one (ZMod.unitOfCoprime 2 h2cop)
+  have hpow :
+      ((2 : ZMod (p ^ 2)) ^ twoOrderSq p hp hpne2) = (1 : ZMod (p ^ 2)) := by
+    simpa [h2cop, Nat.cast_pow] using
+      congrArg (fun x : (ZMod (p ^ 2))ˣ => (x : ZMod (p ^ 2))) hu
+  have hmod : 2 ^ twoOrderSq p hp hpne2 ≡ 1 [MOD p ^ 2] :=
+    (ZMod.natCast_eq_natCast_iff (2 ^ twoOrderSq p hp hpne2) 1 (p ^ 2)).1 <| by
+      simpa [Nat.cast_pow] using hpow
+  have hpowPos : 1 <= 2 ^ twoOrderSq p hp hpne2 := by
+    exact Nat.succ_le_of_lt (pow_pos (by decide : 0 < 2) _)
+  exact (Nat.modEq_iff_dvd' hpowPos).1 hmod.symm
+
+lemma lt_twoOrderSq_of_two_pow_lt_sq
+    (p d : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hpow : 2 ^ d < p ^ 2) :
+    d < twoOrderSq p hp hpne2 := by
+  by_contra hd
+  have hOrdLe : twoOrderSq p hp hpne2 <= d := Nat.not_lt.mp hd
+  have hpowPos : 0 < 2 ^ twoOrderSq p hp hpne2 - 1 := by
+    have hpowGe : 2 <= 2 ^ twoOrderSq p hp hpne2 := by
+      have hOrdPos : 1 <= twoOrderSq p hp hpne2 := Nat.succ_le_of_lt (twoOrderSq_pos p hp hpne2)
+      calc
+        2 = 2 ^ 1 := by norm_num
+        _ <= 2 ^ twoOrderSq p hp hpne2 := by
+          exact Nat.pow_le_pow_right (by decide : 1 <= 2) hOrdPos
+    omega
+  have hsqLe : p ^ 2 <= 2 ^ twoOrderSq p hp hpne2 - 1 := by
+    exact Nat.le_of_dvd hpowPos (sq_dvd_two_pow_twoOrderSq_sub_one p hp hpne2)
+  have hpowLe : 2 ^ twoOrderSq p hp hpne2 <= 2 ^ d := by
+    exact Nat.pow_le_pow_right (by decide : 1 <= 2) hOrdLe
+  have hlt :
+      2 ^ twoOrderSq p hp hpne2 - 1 < p ^ 2 := by
+    calc
+      2 ^ twoOrderSq p hp hpne2 - 1 < 2 ^ twoOrderSq p hp hpne2 := by
+        exact Nat.sub_lt (pow_pos (by decide : 0 < 2) _) (by decide : 0 < 1)
+      _ <= 2 ^ d := hpowLe
+      _ < p ^ 2 := hpow
+  exact (Nat.lt_irrefl (p ^ 2)) (lt_of_le_of_lt hsqLe hlt)
+
+lemma twoOrder_dvd_twoOrderSq (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    twoOrder p hp hpne2 ∣ twoOrderSq p hp hpne2 := by
+  let u : (ZMod p)ˣ :=
+    ZMod.unitOfCoprime 2
+      ((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm
+  let uSq : (ZMod (p ^ 2))ˣ :=
+    ZMod.unitOfCoprime 2
+      ((Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+        (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+          intro hdiv
+          rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+          · exact hp.ne_one h1
+          · exact hpne2 h2)).symm))
+  have hm : p ∣ p ^ 2 := by
+    simpa [pow_two] using Nat.dvd_mul_right p p
+  have hmap : ZMod.unitsMap hm uSq = u := by
+    apply Units.ext
+    calc
+      ↑((ZMod.unitsMap hm) uSq) = (((2 : ZMod (p ^ 2)).cast) : ZMod p) := by
+        simpa [uSq] using (ZMod.unitsMap_val hm uSq)
+      _ = (2 : ZMod p) := by
+            simpa using (ZMod.cast_natCast hm 2 : (((2 : ZMod (p ^ 2)).cast) : ZMod p) = _)
+      _ = ↑u := by simp [u]
+  have h := orderOf_map_dvd (ZMod.unitsMap hm) uSq
+  simpa [twoOrder, twoOrderSq, u, uSq, hmap] using h
+
+lemma three_le_twoOrderSq_of_prime_ne_three (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hpne3 : p ≠ 3) :
+    3 <= twoOrderSq p hp hpne2 := by
+  exact le_trans
+    (three_le_twoOrder_of_prime_ne_three p hp hpne2 hpne3)
+    (Nat.le_of_dvd (twoOrderSq_pos p hp hpne2) (twoOrder_dvd_twoOrderSq p hp hpne2))
+
+lemma wieferichBase2_of_twoOrderSq_dvd_pred
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hdvd : twoOrderSq p hp hpne2 ∣ p - 1) :
+    WieferichBase2 p := by
+  let h2cop : Nat.Coprime 2 (p ^ 2) :=
+    (Nat.coprime_pow_right_iff (by decide : 0 < 2) 2 p).2
+      (((Nat.Prime.coprime_iff_not_dvd hp).2 (by
+        intro hdiv
+        rcases (Nat.dvd_prime Nat.prime_two).1 hdiv with h1 | h2
+        · exact hp.ne_one h1
+        · exact hpne2 h2)).symm)
+  have hu :
+      (ZMod.unitOfCoprime 2 h2cop : (ZMod (p ^ 2))ˣ) ^ (p - 1) = 1 := by
+    rcases hdvd with ⟨m, hm⟩
+    unfold twoOrderSq at hm
+    rw [hm, pow_mul, pow_orderOf_eq_one, one_pow]
+  have hpow :
+      ((2 : ZMod (p ^ 2)) ^ (p - 1)) = (1 : ZMod (p ^ 2)) := by
+    simpa [h2cop, Nat.cast_pow] using
+      congrArg (fun x : (ZMod (p ^ 2))ˣ => (x : ZMod (p ^ 2))) hu
+  exact (ZMod.natCast_eq_natCast_iff (2 ^ (p - 1)) 1 (p ^ 2)).1 <| by
+    simpa [Nat.cast_pow] using hpow
+
+lemma dvd_twoOrderSq_of_not_wieferichBase2
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hNotWieferich : ¬ WieferichBase2 p) :
+    p ∣ twoOrderSq p hp hpne2 := by
+  by_contra hNotDvd
+  have hcop : Nat.Coprime p (twoOrderSq p hp hpne2) :=
+    (Nat.Prime.coprime_iff_not_dvd hp).2 hNotDvd
+  have hpred : twoOrderSq p hp hpne2 ∣ p - 1 :=
+    hcop.symm.dvd_of_dvd_mul_left (twoOrderSq_dvd_p_mul_pred p hp hpne2)
+  exact hNotWieferich (wieferichBase2_of_twoOrderSq_dvd_pred p hp hpne2 hpred)
+
+lemma le_twoOrderSq_of_not_wieferichBase2
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hNotWieferich : ¬ WieferichBase2 p) :
+    p <= twoOrderSq p hp hpne2 := by
+  exact Nat.le_of_dvd (twoOrderSq_pos p hp hpne2)
+    (dvd_twoOrderSq_of_not_wieferichBase2 p hp hpne2 hNotWieferich)
+
+lemma coprime_prime_twoOrder (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) :
+    Nat.Coprime p (twoOrder p hp hpne2) := by
+  exact (Nat.Prime.coprime_iff_not_dvd hp).2 (by
+    intro hdiv
+    have hpred : p ∣ p - 1 := dvd_trans hdiv (twoOrder_dvd_pred p hp hpne2)
+    have hpos : 0 < p - 1 := Nat.sub_pos_of_lt hp.one_lt
+    have hle : p <= p - 1 := Nat.le_of_dvd hpos hpred
+    omega)
+
+lemma p_mul_twoOrder_dvd_twoOrderSq_of_not_wieferichBase2
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2)
+    (hNotWieferich : ¬ WieferichBase2 p) :
+    p * twoOrder p hp hpne2 ∣ twoOrderSq p hp hpne2 := by
+  exact (coprime_prime_twoOrder p hp hpne2).mul_dvd_of_dvd_of_dvd
+    (dvd_twoOrderSq_of_not_wieferichBase2 p hp hpne2 hNotWieferich)
+    (twoOrder_dvd_twoOrderSq p hp hpne2)
+
+lemma three_mul_le_twoOrderSq_of_not_wieferichBase2
+    (p : Nat) (hp : Nat.Prime p) (hpne2 : p ≠ 2) (hpne3 : p ≠ 3)
+    (hNotWieferich : ¬ WieferichBase2 p) :
+    3 * p <= twoOrderSq p hp hpne2 := by
+  have hmulDvd :
+      p * twoOrder p hp hpne2 ∣ twoOrderSq p hp hpne2 :=
+    p_mul_twoOrder_dvd_twoOrderSq_of_not_wieferichBase2 p hp hpne2 hNotWieferich
+  have hmulLe :
+      p * twoOrder p hp hpne2 <= twoOrderSq p hp hpne2 := by
+    exact Nat.le_of_dvd (twoOrderSq_pos p hp hpne2) hmulDvd
+  calc
+    3 * p <= p * twoOrder p hp hpne2 := by
+      simpa [Nat.mul_comm, Nat.mul_left_comm, Nat.mul_assoc] using
+        (Nat.mul_le_mul_left p (three_le_twoOrder_of_prime_ne_three p hp hpne2 hpne3))
+    _ <= twoOrderSq p hp hpne2 := hmulLe
 
 lemma Np_le_order_class_bound_of_prime_ne_two'
     {n p : Nat}
@@ -1317,6 +2428,19 @@ lemma localOrderBound_le_half_add_one_of_prime_ne_two {n p : Nat}
   unfold localOrderBound
   simpa [hp, hp2] using hdiv1
 
+lemma localOrderBound_le_div_prime_add_one_of_not_wieferich {n p : Nat}
+    (hp : Nat.Prime p) (hp2 : p ≠ 2) (hNotWieferich : ¬ WieferichBase2 p) :
+    localOrderBound n p <= (L n + 1) / p + 1 := by
+  have hdiv :
+      (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / p :=
+    Nat.div_le_div_left
+      (le_twoOrderSq_of_not_wieferichBase2 p hp hp2 hNotWieferich) hp.pos
+  have hdiv1 :
+      (L n + 1) / twoOrderSq p hp hp2 + 1 <= (L n + 1) / p + 1 :=
+    Nat.add_le_add_right hdiv 1
+  unfold localOrderBound
+  simpa [hp, hp2] using hdiv1
+
 lemma prime_ne_two_of_mem_largePrimeSupport {n p : Nat}
     (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupport n) :
     p ≠ 2 := by
@@ -1325,6 +2449,14 @@ lemma prime_ne_two_of_mem_largePrimeSupport {n p : Nat}
   have h3le : 3 <= p := le_trans (Nat.succ_le_succ hz2) hpLow
   have h3le2 : 3 <= 2 := hp2 ▸ h3le
   exact Nat.not_succ_le_self 2 h3le2
+
+lemma prime_ne_three_of_mem_largePrimeSupport {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ largePrimeSupport n) :
+    p ≠ 3 := by
+  have hpLow : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpS).1).1
+  intro hp3
+  have h4le : 4 <= p := le_trans (Nat.succ_le_succ hz3) hpLow
+  omega
 
 lemma localOrderBound_le_half_add_one_of_largePrimeSupport {n p : Nat}
     (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupport n) :
@@ -1337,6 +2469,207 @@ lemma localOrderBound_le_half_add_one_of_largePrimeSupportSq {n p : Nat}
     (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupportSq n) :
     localOrderBound n p <= (L n + 1) / 2 + 1 := by
   exact localOrderBound_le_half_add_one_of_largePrimeSupport hz2 ((Finset.mem_filter.mp hpS).1)
+
+lemma localOrderBound_le_div_prime_add_one_of_nonWieferichLargePrimeSupportSq {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ nonWieferichLargePrimeSupportSq n) :
+    localOrderBound n p <= (L n + 1) / p + 1 := by
+  classical
+  have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hpS).1
+  have hNotWieferich : ¬ WieferichBase2 p := (Finset.mem_filter.mp hpS).2
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  exact localOrderBound_le_div_prime_add_one_of_not_wieferich hp hp2 hNotWieferich
+
+lemma L_add_one_div_le_two_of_mem_largePrimeSupport {n p : Nat}
+    (hpS : p ∈ largePrimeSupport n) :
+    (L n + 1) / p <= 2 := by
+  have hpLow : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpS).1).1
+  have hmul : L n + 1 <= p * 2 := by
+    unfold z at hpLow
+    omega
+  exact Nat.div_le_of_le_mul hmul
+
+lemma localOrderBound_le_three_of_nonWieferichLargePrimeSupportSq {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ nonWieferichLargePrimeSupportSq n) :
+    localOrderBound n p <= 3 := by
+  classical
+  have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hpS).1
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+  have hdiv : (L n + 1) / p <= 2 := L_add_one_div_le_two_of_mem_largePrimeSupport hpLarge
+  calc
+    localOrderBound n p <= (L n + 1) / p + 1 := by
+      exact localOrderBound_le_div_prime_add_one_of_nonWieferichLargePrimeSupportSq hz2 hpS
+    _ <= 2 + 1 := Nat.add_le_add_right hdiv 1
+    _ = 3 := by norm_num
+
+lemma L_add_one_div_le_one_of_z_add_two_le {n p : Nat}
+    (hpLow : z n + 2 <= p) :
+    (L n + 1) / p <= 1 := by
+  have hpTwo : 2 <= p := le_trans (by omega) hpLow
+  have hpPos : 0 < p := lt_of_lt_of_le (by decide : 0 < 2) hpTwo
+  have hlt : L n + 1 < 2 * p := by
+    unfold z at hpLow
+    omega
+  have hdivlt : (L n + 1) / p < 2 := (Nat.div_lt_iff_lt_mul hpPos).2 hlt
+  omega
+
+lemma localOrderBound_le_two_of_nonWieferichLargePrimeSupportSq_of_z_add_two_le {n p : Nat}
+    (hz2 : 2 <= z n) (hpS : p ∈ nonWieferichLargePrimeSupportSq n) (hpLow : z n + 2 <= p) :
+    localOrderBound n p <= 2 := by
+  classical
+  have hdiv :
+      (L n + 1) / p <= 1 := L_add_one_div_le_one_of_z_add_two_le hpLow
+  calc
+    localOrderBound n p <= (L n + 1) / p + 1 := by
+      exact localOrderBound_le_div_prime_add_one_of_nonWieferichLargePrimeSupportSq hz2 hpS
+    _ <= 1 + 1 := Nat.add_le_add_right hdiv 1
+    _ = 2 := by norm_num
+
+lemma L_add_one_lt_three_mul_z_add_one (n : Nat) :
+    L n + 1 < 3 * (z n + 1) := by
+  unfold z
+  omega
+
+lemma localOrderBound_le_one_of_nonWieferichLargePrimeSupportSq {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ nonWieferichLargePrimeSupportSq n) :
+    localOrderBound n p <= 1 := by
+  classical
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hpS).1
+  have hNotWieferich : ¬ WieferichBase2 p := (Finset.mem_filter.mp hpS).2
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  have hpLow : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpLarge).1).1
+  have hpne3 : p ≠ 3 := prime_ne_three_of_mem_largePrimeSupport hz3 hpLarge
+  have hOrdLe :
+      3 * p <= twoOrderSq p hp hp2 :=
+    three_mul_le_twoOrderSq_of_not_wieferichBase2 p hp hp2 hpne3 hNotWieferich
+  have hlt : L n + 1 < twoOrderSq p hp hp2 := by
+    have hbase : L n + 1 < 3 * (z n + 1) := L_add_one_lt_three_mul_z_add_one n
+    exact lt_of_lt_of_le hbase (le_trans (Nat.mul_le_mul_left 3 hpLow) hOrdLe)
+  have hdiv0 : (L n + 1) / twoOrderSq p hp hp2 = 0 := Nat.div_eq_of_lt hlt
+  unfold localOrderBound
+  simpa [hp, hp2, hdiv0]
+
+lemma localOrderBound_eq_one_of_nonWieferichLargePrimeSupportSq {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ nonWieferichLargePrimeSupportSq n) :
+    localOrderBound n p = 1 := by
+  have hle : localOrderBound n p <= 1 :=
+    localOrderBound_le_one_of_nonWieferichLargePrimeSupportSq hz3 hpS
+  have hpSq : p ∈ largePrimeSupportSq n := nonWieferichLargePrimeSupportSq_subset n hpS
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  have hpos : 0 < localOrderBound n p := by
+    unfold localOrderBound
+    simp [hp, hp2]
+  omega
+
+lemma Np_eq_one_of_nonWieferichLargePrimeActiveSupportSq {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ nonWieferichLargePrimeActiveSupportSq n) :
+    Np n p = 1 := by
+  have hpAct : p ∈ largePrimeActiveSupportSq n :=
+    nonWieferichLargePrimeActiveSupportSq_subset n hpS
+  have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+  have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+    nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n hpS
+  have hle : Np n p <= 1 := by
+    calc
+      Np n p <= localOrderBound n p :=
+        Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1)
+      _ = 1 := localOrderBound_eq_one_of_nonWieferichLargePrimeSupportSq hz3 hpNon
+  have hpos : 0 < Np n p := Nat.pos_of_ne_zero (Finset.mem_filter.mp hpAct).2
+  omega
+
+lemma localOrderBound_le_third_add_one_of_largePrimeSupportSq {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ largePrimeSupportSq n) :
+    localOrderBound n p <= (L n + 1) / 3 + 1 := by
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpS).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  have hp3 : p ≠ 3 := prime_ne_three_of_mem_largePrimeSupport hz3 hpLarge
+  have hdiv :
+      (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / 3 :=
+    Nat.div_le_div_left (three_le_twoOrderSq_of_prime_ne_three p hp hp2 hp3) (by decide : 0 < 3)
+  have hdiv1 :
+      (L n + 1) / twoOrderSq p hp hp2 + 1 <= (L n + 1) / 3 + 1 :=
+    Nat.add_le_add_right hdiv 1
+  unfold localOrderBound
+  simpa [hp, hp2] using hdiv1
+
+lemma localOrderBound_le_div_add_one_of_largePrimeSupportSq
+    {n p d : Nat} (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupportSq n)
+    (hpow : 2 ^ d < (z n + 1) ^ 2) :
+    localOrderBound n p <= (L n + 1) / (d + 1) + 1 := by
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpS).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  have hpLow : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpLarge).1).1
+  have hsquare :
+      (z n + 1) ^ 2 <= p ^ 2 := by
+    simpa [pow_two] using Nat.mul_le_mul hpLow hpLow
+  have hOrdGt : d < twoOrderSq p hp hp2 := by
+    exact lt_twoOrderSq_of_two_pow_lt_sq p d hp hp2 (lt_of_lt_of_le hpow hsquare)
+  have hOrdGe : d + 1 <= twoOrderSq p hp hp2 := Nat.succ_le_of_lt hOrdGt
+  have hdiv :
+      (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / (d + 1) :=
+    Nat.div_le_div_left hOrdGe (Nat.succ_pos d)
+  have hdiv1 :
+      (L n + 1) / twoOrderSq p hp hp2 + 1 <= (L n + 1) / (d + 1) + 1 :=
+    Nat.add_le_add_right hdiv 1
+  unfold localOrderBound
+  simpa [hp, hp2] using hdiv1
+
+lemma two_pow_two_mul_log_sub_one_lt_sq {m : Nat} (hm : 2 <= m) :
+    2 ^ (2 * Nat.log 2 m - 1) < m ^ 2 := by
+  have hm0 : m ≠ 0 := Nat.ne_of_gt (lt_of_lt_of_le (by decide : 0 < 2) hm)
+  have hm1 : 1 < m := lt_of_lt_of_le (by decide : 1 < 2) hm
+  have hlogPos : 0 < Nat.log 2 m := Nat.log_pos Nat.one_lt_two hm1
+  have htwoLogPos : 0 < 2 * Nat.log 2 m := Nat.mul_pos (by decide : 0 < 2) hlogPos
+  have hExpLt : 2 * Nat.log 2 m - 1 < 2 * Nat.log 2 m := Nat.sub_lt htwoLogPos (by decide : 0 < 1)
+  have hpowLt :
+      2 ^ (2 * Nat.log 2 m - 1) < 2 ^ (2 * Nat.log 2 m) :=
+    Nat.pow_lt_pow_right Nat.one_lt_two hExpLt
+  have hlogLe : 2 ^ Nat.log 2 m <= m := Nat.pow_log_le_self 2 hm0
+  have hpowLe : 2 ^ (2 * Nat.log 2 m) <= m ^ 2 := by
+    calc
+      2 ^ (2 * Nat.log 2 m) = 2 ^ Nat.log 2 m * 2 ^ Nat.log 2 m := by
+        rw [show 2 * Nat.log 2 m = Nat.log 2 m + Nat.log 2 m by omega, Nat.pow_add]
+      _ <= m * m := Nat.mul_le_mul hlogLe hlogLe
+      _ = m ^ 2 := by rw [pow_two]
+  exact lt_of_lt_of_le hpowLt hpowLe
+
+lemma localOrderBound_le_logPrime_add_one_of_largePrimeSupportSq
+    {n p : Nat} (hz2 : 2 <= z n) (hpS : p ∈ largePrimeSupportSq n) :
+    localOrderBound n p <= (L n + 1) / (2 * Nat.log 2 p) + 1 := by
+  have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpS).1
+  have hp : Nat.Prime p := (Finset.mem_filter.mp hpLarge).2
+  have hp2 : p ≠ 2 := prime_ne_two_of_mem_largePrimeSupport hz2 hpLarge
+  have hpGe2 : 2 <= p := hp.two_le
+  have hpow :
+      2 ^ (2 * Nat.log 2 p - 1) < p ^ 2 :=
+    two_pow_two_mul_log_sub_one_lt_sq hpGe2
+  have hOrdGt :
+      2 * Nat.log 2 p - 1 < twoOrderSq p hp hp2 :=
+    lt_twoOrderSq_of_two_pow_lt_sq p (2 * Nat.log 2 p - 1) hp hp2 hpow
+  have hlogPos : 1 <= 2 * Nat.log 2 p := by
+    have hlog : 0 < Nat.log 2 p := Nat.log_pos Nat.one_lt_two hp.one_lt
+    exact Nat.succ_le_of_lt (Nat.mul_pos (by decide : 0 < 2) hlog)
+  have hOrdGe :
+      2 * Nat.log 2 p <= twoOrderSq p hp hp2 := by
+    simpa [Nat.sub_add_cancel hlogPos] using Nat.succ_le_of_lt hOrdGt
+  have hdiv :
+      (L n + 1) / twoOrderSq p hp hp2 <= (L n + 1) / (2 * Nat.log 2 p) :=
+    Nat.div_le_div_left hOrdGe (lt_of_lt_of_le (by decide : 0 < 1) hlogPos)
+  have hdiv1 :
+      (L n + 1) / twoOrderSq p hp hp2 + 1 <= (L n + 1) / (2 * Nat.log 2 p) + 1 :=
+    Nat.add_le_add_right hdiv 1
+  unfold localOrderBound
+  simpa [hp, hp2] using hdiv1
 
 lemma sum_localOrderBound_large_le_half_add_one (n : Nat) (hz2 : 2 <= z n) :
     Finset.sum (largePrimeSupport n) (fun p => localOrderBound n p) <=
@@ -1359,6 +2692,1393 @@ lemma sum_localOrderBound_largeSq_le_half_add_one (n : Nat) (hz2 : 2 <= z n) :
             intro p hpS
             exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpS)
     _ = (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by simp
+
+lemma sum_localOrderBound_wieferichLargeSq_le_half_add_one (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (wieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by
+  classical
+  calc
+    Finset.sum (wieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (wieferichLargePrimeSupportSq n) (fun _ => (L n + 1) / 2 + 1) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2
+              ((Finset.mem_filter.mp hpS).1))
+    _ = (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by simp
+
+lemma sum_localOrderBound_nonWieferichLargeSq_le_div_prime_add_one
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+  classical
+  exact Finset.sum_le_sum (by
+    intro p hpS
+    exact localOrderBound_le_div_prime_add_one_of_nonWieferichLargePrimeSupportSq hz2 hpS)
+
+lemma sum_localOrderBound_largeSq_le_wieferich_split (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+        Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+  classical
+  have hsplit :
+      Finset.sum (wieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) := by
+    simpa [wieferichLargePrimeSupportSq, nonWieferichLargePrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := WieferichBase2)
+        (f := fun p => localOrderBound n p))
+  have hWieferich :
+      Finset.sum (wieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) :=
+    sum_localOrderBound_wieferichLargeSq_le_half_add_one n hz2
+  have hNon :
+      Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) :=
+    sum_localOrderBound_nonWieferichLargeSq_le_div_prime_add_one n hz2
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) =
+        Finset.sum (wieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) := by
+            symm
+            exact hsplit
+    _ <= (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+          Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+            exact Nat.add_le_add hWieferich hNon
+
+lemma sum_nonWieferichLargeSq_div_prime_add_one_le_three (n : Nat) :
+    Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) <=
+      (nonWieferichLargePrimeSupportSq n).card * 3 := by
+  classical
+  calc
+    Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) <=
+        Finset.sum (nonWieferichLargePrimeSupportSq n) (fun _ => 3) := by
+          exact Finset.sum_le_sum (by
+            intro p hpS
+            have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hpS).1
+            have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+            have hdiv : (L n + 1) / p <= 2 := L_add_one_div_le_two_of_mem_largePrimeSupport hpLarge
+            calc
+              (L n + 1) / p + 1 <= 2 + 1 := Nat.add_le_add_right hdiv 1
+              _ = 3 := by norm_num)
+    _ = (nonWieferichLargePrimeSupportSq n).card * 3 := by simp
+
+lemma sum_localOrderBound_nonWieferichLargeSq_le_three (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (nonWieferichLargePrimeSupportSq n).card * 3 := by
+  calc
+    Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+          exact sum_localOrderBound_nonWieferichLargeSq_le_div_prime_add_one n hz2
+    _ <= (nonWieferichLargePrimeSupportSq n).card * 3 := by
+      exact sum_nonWieferichLargeSq_div_prime_add_one_le_three n
+
+lemma sum_localOrderBound_largeSq_le_wieferich_three_split (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+        (nonWieferichLargePrimeSupportSq n).card * 3 := by
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+          Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+            exact sum_localOrderBound_largeSq_le_wieferich_split n hz2
+    _ <= (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+          (nonWieferichLargePrimeSupportSq n).card * 3 := by
+            exact Nat.add_le_add_left
+              (sum_nonWieferichLargeSq_div_prime_add_one_le_three n)
+              ((wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1))
+
+lemma three_le_half_add_one_of_two_le_z (n : Nat) (hz2 : 2 <= z n) :
+    3 <= (L n + 1) / 2 + 1 := by
+  have hL4 : 4 <= L n := by
+    unfold z at hz2
+    exact (Nat.le_div_iff_mul_le (by decide : 0 < 2)).1 hz2
+  have hhalf : 2 <= (L n + 1) / 2 := by
+    exact (Nat.le_div_iff_mul_le (by decide : 0 < 2)).2 (le_trans hL4 (Nat.le_succ _))
+  exact Nat.succ_le_succ hhalf
+
+lemma wieferich_three_split_eq_supportSq_three_add_excess (n : Nat) (hz2 : 2 <= z n) :
+    (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+        (nonWieferichLargePrimeSupportSq n).card * 3 =
+      (largePrimeSupportSq n).card * 3 +
+        (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  let a := (wieferichLargePrimeSupportSq n).card
+  let b := (nonWieferichLargePrimeSupportSq n).card
+  let h := (L n + 1) / 2 + 1
+  have hh : 3 <= h := by
+    dsimp [h]
+    exact three_le_half_add_one_of_two_le_z n hz2
+  have hab : a + b = (largePrimeSupportSq n).card := by
+    dsimp [a, b]
+    exact card_wieferich_add_card_nonWieferichLargePrimeSupportSq n
+  calc
+    a * h + b * 3 = a * ((h - 3) + 3) + b * 3 := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 3) + a * 3 + b * 3 := by
+      rw [Nat.mul_add]
+    _ = a * (h - 3) + (a * 3 + b * 3) := by ac_rfl
+    _ = a * (h - 3) + (a + b) * 3 := by rw [← Nat.add_mul]
+    _ = a * (h - 3) + (largePrimeSupportSq n).card * 3 := by rw [hab]
+    _ = (largePrimeSupportSq n).card * 3 + a * (h - 3) := by ac_rfl
+    _ =
+        (largePrimeSupportSq n).card * 3 +
+          (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+            rfl
+
+lemma sum_localOrderBound_largeSq_le_supportSq_three_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+      (largePrimeSupportSq n).card * 3 +
+        (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  calc
+    Finset.sum (largePrimeSupportSq n) (fun p => localOrderBound n p) <=
+        (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+          (nonWieferichLargePrimeSupportSq n).card * 3 := by
+            exact sum_localOrderBound_largeSq_le_wieferich_three_split n hz2
+    _ = (largePrimeSupportSq n).card * 3 +
+          (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+            exact wieferich_three_split_eq_supportSq_three_add_excess n hz2
+
+lemma sum_Np_largePrimeSupportSq_eq_sum_largePrimeActiveSupportSq (n : Nat) :
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) =
+      Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+  classical
+  simpa [largePrimeActiveSupportSq] using
+    (Finset.sum_filter_ne_zero (s := largePrimeSupportSq n) (f := fun p => Np n p))
+
+lemma sum_localOrderBound_largePrimeActiveSq_le_wieferich_three_split
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+      (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+        (nonWieferichLargePrimeActiveSupportSq n).card * 3 := by
+  classical
+  have hsplit :
+      Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    simpa [wieferichLargePrimeActiveSupportSq, nonWieferichLargePrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := WieferichBase2)
+        (f := fun p => localOrderBound n p))
+  have hWieferich :
+      Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) := by
+    calc
+      Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+          Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun _ => (L n + 1) / 2 + 1) := by
+            exact Finset.sum_le_sum (by
+              intro p hpS
+              have hpSq : p ∈ largePrimeSupportSq n :=
+                largePrimeActiveSupportSq_subset n ((Finset.mem_filter.mp hpS).1)
+              exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpSq)
+      _ = (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) := by simp
+  have hNon :
+      Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (nonWieferichLargePrimeActiveSupportSq n).card * 3 := by
+    calc
+      Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+          Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun _ => 3) := by
+            exact Finset.sum_le_sum (by
+              intro p hpS
+              have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+                nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n hpS
+              exact localOrderBound_le_three_of_nonWieferichLargePrimeSupportSq hz2 hpNon)
+      _ = (nonWieferichLargePrimeActiveSupportSq n).card * 3 := by simp
+  calc
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) =
+        Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            symm
+            exact hsplit
+    _ <= (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+          (nonWieferichLargePrimeActiveSupportSq n).card * 3 := by
+            exact Nat.add_le_add hWieferich hNon
+
+lemma wieferichActive_three_split_eq_activeSupportSq_three_add_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+        (nonWieferichLargePrimeActiveSupportSq n).card * 3 =
+      (largePrimeActiveSupportSq n).card * 3 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  let a := (wieferichLargePrimeActiveSupportSq n).card
+  let b := (nonWieferichLargePrimeActiveSupportSq n).card
+  let h := (L n + 1) / 2 + 1
+  have hh : 3 <= h := by
+    dsimp [h]
+    exact three_le_half_add_one_of_two_le_z n hz2
+  have hab : a + b = (largePrimeActiveSupportSq n).card := by
+    dsimp [a, b]
+    exact card_wieferich_add_card_nonWieferichLargePrimeActiveSupportSq n
+  calc
+    a * h + b * 3 = a * ((h - 3) + 3) + b * 3 := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 3) + a * 3 + b * 3 := by rw [Nat.mul_add]
+    _ = a * (h - 3) + (a * 3 + b * 3) := by ac_rfl
+    _ = a * (h - 3) + (a + b) * 3 := by rw [← Nat.add_mul]
+    _ = a * (h - 3) + (largePrimeActiveSupportSq n).card * 3 := by rw [hab]
+    _ = (largePrimeActiveSupportSq n).card * 3 + a * (h - 3) := by ac_rfl
+    _ =
+        (largePrimeActiveSupportSq n).card * 3 +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+            rfl
+
+lemma sum_localOrderBound_largePrimeActiveSq_le_supportSq_three_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+      (largePrimeActiveSupportSq n).card * 3 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  calc
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+          (nonWieferichLargePrimeActiveSupportSq n).card * 3 := by
+            exact sum_localOrderBound_largePrimeActiveSq_le_wieferich_three_split n hz2
+    _ = (largePrimeActiveSupportSq n).card * 3 +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+            exact wieferichActive_three_split_eq_activeSupportSq_three_add_excess n hz2
+
+lemma card_filter_eq_singleton_le_one {α : Type*} [DecidableEq α]
+    (s : Finset α) (a : α) :
+    (s.filter (fun x => x = a)).card <= 1 := by
+  classical
+  simpa [eq_comm] using (show (s.filter (Eq a)).card <= 1 by
+    rw [Finset.filter_eq]
+    split_ifs <;> simp)
+
+lemma sum_localOrderBound_nonWieferichLargePrimeActiveSq_le_two_mul_card_add_one
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+      (nonWieferichLargePrimeActiveSupportSq n).card * 2 + 1 := by
+  classical
+  let a := z n + 1
+  have hpoint :
+      ∀ p ∈ nonWieferichLargePrimeActiveSupportSq n,
+        localOrderBound n p <= if p = a then 3 else 2 := by
+    intro p hpS
+    by_cases hpEq : p = a
+    · simpa [a, hpEq] using
+        localOrderBound_le_three_of_nonWieferichLargePrimeSupportSq hz2
+          (nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n hpS)
+    · have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+        nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n hpS
+      have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp ((Finset.mem_filter.mp hpNon).1)).1
+      have hpLow1 : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpLarge).1).1
+      have hpLow2 : z n + 2 <= p := by
+        have hneq : z n + 1 ≠ p := by simpa [a, eq_comm] using hpEq
+        have hlt : z n + 1 < p := lt_of_le_of_ne hpLow1 hneq
+        exact Nat.succ_le_of_lt hlt
+      simpa [a, hpEq] using
+        localOrderBound_le_two_of_nonWieferichLargePrimeSupportSq_of_z_add_two_le hz2 hpNon hpLow2
+  have hsum :
+      Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => if p = a then 3 else 2) := by
+    exact Finset.sum_le_sum (by intro p hp; exact hpoint p hp)
+  have hcalc :
+      Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => if p = a then 3 else 2) <=
+        (nonWieferichLargePrimeActiveSupportSq n).card * 2 + 1 := by
+    calc
+      Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => if p = a then 3 else 2) =
+          Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => 2 + if p = a then 1 else 0) := by
+            refine Finset.sum_congr rfl ?_
+            intro p hp
+            by_cases hpEq : p = a <;> simp [hpEq]
+      _ = Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun _ => 2) +
+            Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => if p = a then 1 else 0) := by
+              rw [Finset.sum_add_distrib]
+      _ = (nonWieferichLargePrimeActiveSupportSq n).card * 2 +
+            Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => if p = a then 1 else 0) := by
+              simp
+      _ = (nonWieferichLargePrimeActiveSupportSq n).card * 2 +
+            ((nonWieferichLargePrimeActiveSupportSq n).filter (fun p => p = a)).card := by
+              simpa using congrArg
+                (fun t => (nonWieferichLargePrimeActiveSupportSq n).card * 2 + t)
+                (Finset.sum_boole (p := fun p => p = a) (s := nonWieferichLargePrimeActiveSupportSq n))
+      _ <= (nonWieferichLargePrimeActiveSupportSq n).card * 2 + 1 := by
+              exact Nat.add_le_add_left
+                (card_filter_eq_singleton_le_one (nonWieferichLargePrimeActiveSupportSq n) a)
+                ((nonWieferichLargePrimeActiveSupportSq n).card * 2)
+  exact le_trans hsum hcalc
+
+lemma activeWieferich_two_split_eq_activeSupportSq_two_add_excess_plus_one
+    (n : Nat) (hz2 : 2 <= z n) :
+    (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+        ((nonWieferichLargePrimeActiveSupportSq n).card * 2 + 1) =
+      (largePrimeActiveSupportSq n).card * 2 + 1 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+  let a := (wieferichLargePrimeActiveSupportSq n).card
+  let b := (nonWieferichLargePrimeActiveSupportSq n).card
+  let h := (L n + 1) / 2 + 1
+  have hh : 2 <= h := le_trans (by decide : 2 <= 3) (three_le_half_add_one_of_two_le_z n hz2)
+  have hab : a + b = (largePrimeActiveSupportSq n).card := by
+    dsimp [a, b]
+    exact card_wieferich_add_card_nonWieferichLargePrimeActiveSupportSq n
+  calc
+    a * h + (b * 2 + 1) = a * ((h - 2) + 2) + (b * 2 + 1) := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 2) + a * 2 + (b * 2 + 1) := by rw [Nat.mul_add]
+    _ = a * (h - 2) + ((a * 2 + b * 2) + 1) := by ac_rfl
+    _ = a * (h - 2) + ((a + b) * 2 + 1) := by rw [← Nat.add_mul]
+    _ = a * (h - 2) + ((largePrimeActiveSupportSq n).card * 2 + 1) := by rw [hab]
+    _ = (largePrimeActiveSupportSq n).card * 2 + 1 + a * (h - 2) := by ac_rfl
+    _ =
+        (largePrimeActiveSupportSq n).card * 2 + 1 +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+            rfl
+
+lemma sum_localOrderBound_largePrimeActiveSq_le_supportSq_two_add_wieferich_excess_plus_one
+    (n : Nat) (hz2 : 2 <= z n) :
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+      (largePrimeActiveSupportSq n).card * 2 + 1 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+  classical
+  calc
+    Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) =
+        Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichLargePrimeActiveSupportSq, nonWieferichLargePrimeActiveSupportSq] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := largePrimeActiveSupportSq n) (p := WieferichBase2)
+                (f := fun p => localOrderBound n p))
+    _ <= (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) +
+          ((nonWieferichLargePrimeActiveSupportSq n).card * 2 + 1) := by
+            exact Nat.add_le_add
+              (by
+                calc
+                  Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+                      Finset.sum (wieferichLargePrimeActiveSupportSq n) (fun _ => (L n + 1) / 2 + 1) := by
+                        exact Finset.sum_le_sum (by
+                          intro p hpS
+                          have hpSq : p ∈ largePrimeSupportSq n :=
+                            largePrimeActiveSupportSq_subset n ((Finset.mem_filter.mp hpS).1)
+                          exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpSq)
+                  _ = (wieferichLargePrimeActiveSupportSq n).card * ((L n + 1) / 2 + 1) := by simp)
+              (sum_localOrderBound_nonWieferichLargePrimeActiveSq_le_two_mul_card_add_one n hz2)
+    _ = (largePrimeActiveSupportSq n).card * 2 + 1 +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+            exact activeWieferich_two_split_eq_activeSupportSq_two_add_excess_plus_one n hz2
+
+lemma sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_two_mul_card_add_one
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ nonWieferichLargePrimeActiveSupportSq n) (hz2 : 2 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <= S.card * 2 + 1 := by
+  classical
+  let a := z n + 1
+  have hpoint :
+      ∀ p ∈ S, localOrderBound n p <= if p = a then 3 else 2 := by
+    intro p hpS
+    by_cases hpEq : p = a
+    · have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+        nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n (hS hpS)
+      simpa [a, hpEq] using
+        localOrderBound_le_three_of_nonWieferichLargePrimeSupportSq hz2 hpNon
+    · have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+        nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n (hS hpS)
+      have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp ((Finset.mem_filter.mp hpNon).1)).1
+      have hpLow1 : z n + 1 <= p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hpLarge).1).1
+      have hpLow2 : z n + 2 <= p := by
+        have hneq : z n + 1 ≠ p := by simpa [a, eq_comm] using hpEq
+        have hlt : z n + 1 < p := lt_of_le_of_ne hpLow1 hneq
+        exact Nat.succ_le_of_lt hlt
+      simpa [a, hpEq] using
+        localOrderBound_le_two_of_nonWieferichLargePrimeSupportSq_of_z_add_two_le hz2 hpNon hpLow2
+  have hsum :
+      Finset.sum S (fun p => localOrderBound n p) <=
+        Finset.sum S (fun p => if p = a then 3 else 2) := by
+    exact Finset.sum_le_sum (by intro p hp; exact hpoint p hp)
+  have hcalc :
+      Finset.sum S (fun p => if p = a then 3 else 2) <= S.card * 2 + 1 := by
+    calc
+      Finset.sum S (fun p => if p = a then 3 else 2) =
+          Finset.sum S (fun p => 2 + if p = a then 1 else 0) := by
+            refine Finset.sum_congr rfl ?_
+            intro p hp
+            by_cases hpEq : p = a <;> simp [hpEq]
+      _ = Finset.sum S (fun _ => 2) +
+            Finset.sum S (fun p => if p = a then 1 else 0) := by
+              rw [Finset.sum_add_distrib]
+      _ = S.card * 2 + Finset.sum S (fun p => if p = a then 1 else 0) := by
+              simp
+      _ = S.card * 2 + (S.filter (fun p => p = a)).card := by
+              simpa using congrArg
+                (fun t => S.card * 2 + t)
+                (Finset.sum_boole (p := fun p => p = a) (s := S))
+      _ <= S.card * 2 + 1 := by
+              exact Nat.add_le_add_left (card_filter_eq_singleton_le_one S a) (S.card * 2)
+  exact le_trans hsum hcalc
+
+noncomputable def wieferichSubsupport (S : Finset Nat) : Finset Nat := by
+  classical
+  exact S.filter WieferichBase2
+
+noncomputable def nonWieferichSubsupport (S : Finset Nat) : Finset Nat := by
+  classical
+  exact S.filter (fun p => ¬ WieferichBase2 p)
+
+lemma activeWieferich_two_split_eq_activeSubset_two_add_excess_plus_one
+    (n : Nat) (S : Finset Nat) (hz2 : 2 <= z n) :
+    (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) +
+        (((nonWieferichSubsupport S).card * 2) + 1) =
+      S.card * 2 + 1 +
+        (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 2) := by
+  classical
+  let a := (wieferichSubsupport S).card
+  let b := (nonWieferichSubsupport S).card
+  let h := (L n + 1) / 2 + 1
+  have hh : 2 <= h := le_trans (by decide : 2 <= 3) (three_le_half_add_one_of_two_le_z n hz2)
+  have hab : a + b = S.card := by
+    dsimp [a, b]
+    simpa [wieferichSubsupport, nonWieferichSubsupport] using
+      (Finset.card_filter_add_card_filter_not (s := S) (p := WieferichBase2))
+  calc
+    a * h + (b * 2 + 1) = a * ((h - 2) + 2) + (b * 2 + 1) := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 2) + a * 2 + (b * 2 + 1) := by rw [Nat.mul_add]
+    _ = a * (h - 2) + ((a * 2 + b * 2) + 1) := by ac_rfl
+    _ = a * (h - 2) + ((a + b) * 2 + 1) := by rw [← Nat.add_mul]
+    _ = a * (h - 2) + (S.card * 2 + 1) := by rw [hab]
+    _ = S.card * 2 + 1 + a * (h - 2) := by ac_rfl
+    _ =
+        S.card * 2 + 1 +
+          (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 2) := by
+            rfl
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_two_mul_card_add_wieferich_excess_plus_one
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz2 : 2 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card * 2 + 1 +
+        (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 2) := by
+  classical
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+    _ <= (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) +
+          (((nonWieferichSubsupport S).card * 2) + 1) := by
+            exact Nat.add_le_add
+              (by
+                calc
+                  Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) <=
+                      Finset.sum (wieferichSubsupport S) (fun _ => (L n + 1) / 2 + 1) := by
+                        exact Finset.sum_le_sum (by
+                          intro p hpS
+                          have hpAct : p ∈ largePrimeActiveSupportSq n := by
+                            have hpMem : p ∈ S := by
+                              simpa [wieferichSubsupport] using (Finset.mem_filter.mp hpS).1
+                            exact hS hpMem
+                          have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+                          exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpSq)
+                  _ = (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) := by simp)
+              (sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_two_mul_card_add_one
+                n (nonWieferichSubsupport S)
+                (by
+                  intro p hp
+                  have hpS : p ∈ S := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+                  have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+                  have hpNot : ¬ WieferichBase2 p := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+                  exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩)
+                hz2)
+    _ = S.card * 2 + 1 +
+          (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 2) := by
+            exact activeWieferich_two_split_eq_activeSubset_two_add_excess_plus_one n S hz2
+
+lemma sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_card
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ nonWieferichLargePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <= S.card := by
+  classical
+  calc
+    Finset.sum S (fun p => localOrderBound n p) <= Finset.sum S (fun _ => 1) := by
+      exact Finset.sum_le_sum (by
+        intro p hpS
+        have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+          nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n (hS hpS)
+        exact localOrderBound_le_one_of_nonWieferichLargePrimeSupportSq hz3 hpNon)
+    _ = S.card := by simp
+
+lemma sum_localOrderBound_nonWieferichLargePrimeActiveSubset_eq_card
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ nonWieferichLargePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) = S.card := by
+  classical
+  calc
+    Finset.sum S (fun p => localOrderBound n p) = Finset.sum S (fun _ => 1) := by
+      refine Finset.sum_congr rfl ?_
+      intro p hpS
+      have hpNon : p ∈ nonWieferichLargePrimeSupportSq n :=
+        nonWieferichLargePrimeActiveSupportSq_subset_nonWieferichLargePrimeSupportSq n (hS hpS)
+      exact localOrderBound_eq_one_of_nonWieferichLargePrimeSupportSq hz3 hpNon
+    _ = S.card := by simp
+
+lemma sum_Np_nonWieferichLargePrimeActiveSubset_eq_card
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ nonWieferichLargePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => Np n p) = S.card := by
+  classical
+  calc
+    Finset.sum S (fun p => Np n p) = Finset.sum S (fun _ => 1) := by
+      refine Finset.sum_congr rfl ?_
+      intro p hpS
+      exact Np_eq_one_of_nonWieferichLargePrimeActiveSupportSq hz3 (hS hpS)
+    _ = S.card := by simp
+
+lemma sum_Np_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => Np n p) =
+      (nonWieferichSubsupport S).card +
+        Finset.sum (wieferichSubsupport S) (fun p => Np n p) := by
+  classical
+  have hNonSub : nonWieferichSubsupport S ⊆ nonWieferichLargePrimeActiveSupportSq n := by
+    intro p hp
+    have hpS : p ∈ S := by
+      simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+    have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+    have hpNot : ¬ WieferichBase2 p := by
+      simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+    exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩
+  calc
+    Finset.sum S (fun p => Np n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => Np n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => Np n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => Np n p))
+    _ = Finset.sum (wieferichSubsupport S) (fun p => Np n p) +
+          (nonWieferichSubsupport S).card := by
+            rw [sum_Np_nonWieferichLargePrimeActiveSubset_eq_card
+              n (nonWieferichSubsupport S) hNonSub hz3]
+    _ = (nonWieferichSubsupport S).card +
+          Finset.sum (wieferichSubsupport S) (fun p => Np n p) := by
+            ac_rfl
+
+lemma sum_Np_largePrimeActiveSubset_eq_card_add_wieferich_excess
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => Np n p) =
+      S.card + Finset.sum (wieferichSubsupport S) (fun p => Np n p - 1) := by
+  classical
+  have hpos :
+      ∀ p ∈ wieferichSubsupport S, 0 < Np n p := by
+    intro p hp
+    have hpS : p ∈ S := by
+      simpa [wieferichSubsupport] using (Finset.mem_filter.mp hp).1
+    exact Nat.pos_of_ne_zero ((Finset.mem_filter.mp (hS hpS)).2)
+  calc
+    Finset.sum S (fun p => Np n p) =
+      (nonWieferichSubsupport S).card +
+        Finset.sum (wieferichSubsupport S) (fun p => Np n p) := by
+          exact sum_Np_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum n S hS hz3
+    _ = (nonWieferichSubsupport S).card +
+          (Finset.sum (wieferichSubsupport S) (fun p => (Np n p - 1) + 1)) := by
+            refine congrArg (fun t => (nonWieferichSubsupport S).card + t) ?_
+            refine Finset.sum_congr rfl ?_
+            intro p hp
+            exact (Nat.sub_add_cancel (Nat.succ_le_of_lt (hpos p hp))).symm
+    _ = (nonWieferichSubsupport S).card +
+          (Finset.sum (wieferichSubsupport S) (fun p => Np n p - 1) +
+            Finset.sum (wieferichSubsupport S) (fun _ => 1)) := by
+            rw [Finset.sum_add_distrib]
+    _ = (nonWieferichSubsupport S).card +
+          (Finset.sum (wieferichSubsupport S) (fun p => Np n p - 1) +
+            (wieferichSubsupport S).card) := by
+            simp
+    _ = S.card + Finset.sum (wieferichSubsupport S) (fun p => Np n p - 1) := by
+          have hcard :
+              (wieferichSubsupport S).card + (nonWieferichSubsupport S).card = S.card := by
+                simpa [wieferichSubsupport, nonWieferichSubsupport] using
+                  (Finset.card_filter_add_card_filter_not (s := S) (p := WieferichBase2))
+          omega
+
+lemma cleanBadAtSq_subset_badAtSq {n z0 p : Nat} :
+    cleanBadAtSq n z0 p ⊆ badAtSq n p := by
+  classical
+  intro k hk
+  rcases Finset.mem_filter.mp hk with ⟨hkA, hmod0⟩
+  exact Finset.mem_filter.mpr ⟨A_subset_K n z0 hkA, hmod0⟩
+
+lemma cleanNp_le_Np (n z0 p : Nat) :
+    cleanNp n z0 p <= Np n p := by
+  exact Finset.card_le_card (cleanBadAtSq_subset_badAtSq (n := n) (z0 := z0) (p := p))
+
+lemma largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq (n : Nat) :
+    largePrimeCleanSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  rcases Finset.mem_filter.mp hp with ⟨hpSq, hclean⟩
+  have hcleanPos : 0 < cleanNp n (z n) p := Nat.pos_of_ne_zero hclean
+  have hNpPos : 0 < Np n p := lt_of_lt_of_le hcleanPos (cleanNp_le_Np n (z n) p)
+  exact Finset.mem_filter.mpr ⟨hpSq, Nat.ne_of_gt hNpPos⟩
+
+lemma wieferichLargePrimeCleanSupportSq_subset_wieferichLargePrimeActiveSupportSq (n : Nat) :
+    wieferichLargePrimeCleanSupportSq n ⊆ wieferichLargePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  have hpClean : p ∈ largePrimeCleanSupportSq n := (Finset.mem_filter.mp hp).1
+  have hpAct : p ∈ largePrimeActiveSupportSq n :=
+    largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq n hpClean
+  exact Finset.mem_filter.mpr ⟨hpAct, (Finset.mem_filter.mp hp).2⟩
+
+lemma nonWieferichLargePrimeCleanSupportSq_subset_nonWieferichLargePrimeActiveSupportSq (n : Nat) :
+    nonWieferichLargePrimeCleanSupportSq n ⊆ nonWieferichLargePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  have hpClean : p ∈ largePrimeCleanSupportSq n := (Finset.mem_filter.mp hp).1
+  have hpAct : p ∈ largePrimeActiveSupportSq n :=
+    largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq n hpClean
+  exact Finset.mem_filter.mpr ⟨hpAct, (Finset.mem_filter.mp hp).2⟩
+
+lemma veryLargePrimeCleanSupportSq_subset_veryLargePrimeActiveSupportSq (n : Nat) :
+    veryLargePrimeCleanSupportSq n ⊆ veryLargePrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  rcases Finset.mem_filter.mp hp with ⟨hpClean, hpLarge⟩
+  have hpAct : p ∈ largePrimeActiveSupportSq n :=
+    largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq n hpClean
+  exact Finset.mem_filter.mpr ⟨hpAct, hpLarge⟩
+
+lemma lowFourthPrimeCleanSupportSq_subset_lowFourthPrimeActiveSupportSq (n : Nat) :
+    lowFourthPrimeCleanSupportSq n ⊆ lowFourthPrimeActiveSupportSq n := by
+  classical
+  intro p hp
+  rcases Finset.mem_filter.mp hp with ⟨hpClean, hpLow⟩
+  have hpAct : p ∈ largePrimeActiveSupportSq n :=
+    largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq n hpClean
+  exact Finset.mem_filter.mpr ⟨hpAct, hpLow⟩
+
+lemma lowFourthPrimeCleanSupportSq_subset_largePrimeActiveSupportSq (n : Nat) :
+    lowFourthPrimeCleanSupportSq n ⊆ largePrimeActiveSupportSq n := by
+  intro p hp
+  exact lowFourthPrimeActiveSupportSq_subset n
+    (lowFourthPrimeCleanSupportSq_subset_lowFourthPrimeActiveSupportSq n hp)
+
+lemma sum_cleanNp_largePrimeSupportSq_eq_sum_largePrimeCleanSupportSq (n : Nat) :
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+      Finset.sum (largePrimeSupportSq n) (fun p => cleanNp n (z n) p) := by
+  classical
+  simpa [largePrimeCleanSupportSq] using
+    (Finset.sum_filter_ne_zero (s := largePrimeSupportSq n) (f := fun p => cleanNp n (z n) p))
+
+lemma cleanNp_eq_one_of_nonWieferichLargePrimeCleanSupportSq {n p : Nat}
+    (hz3 : 3 <= z n) (hpS : p ∈ nonWieferichLargePrimeCleanSupportSq n) :
+    cleanNp n (z n) p = 1 := by
+  classical
+  have hpClean : p ∈ largePrimeCleanSupportSq n := (Finset.mem_filter.mp hpS).1
+  have hpAct : p ∈ nonWieferichLargePrimeActiveSupportSq n :=
+    nonWieferichLargePrimeCleanSupportSq_subset_nonWieferichLargePrimeActiveSupportSq n hpS
+  have hle : cleanNp n (z n) p <= 1 := by
+    calc
+      cleanNp n (z n) p <= Np n p := cleanNp_le_Np n (z n) p
+      _ = 1 := Np_eq_one_of_nonWieferichLargePrimeActiveSupportSq hz3 hpAct
+  have hpos : 0 < cleanNp n (z n) p := Nat.pos_of_ne_zero ((Finset.mem_filter.mp hpClean).2)
+  omega
+
+lemma sum_cleanNp_nonWieferichLargePrimeCleanSupportSq_eq_card
+    (n : Nat) (hz3 : 3 <= z n) :
+    Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+      (nonWieferichLargePrimeCleanSupportSq n).card := by
+  classical
+  calc
+    Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+        Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun _ => 1) := by
+          refine Finset.sum_congr rfl ?_
+          intro p hpS
+          exact cleanNp_eq_one_of_nonWieferichLargePrimeCleanSupportSq hz3 hpS
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card := by simp
+
+lemma sum_cleanNp_largePrimeCleanSupportSq_eq_nonWieferich_card_add_wieferich_sum
+    (n : Nat) (hz3 : 3 <= z n) :
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+      (nonWieferichLargePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+  classical
+  calc
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+            symm
+            simpa [wieferichLargePrimeCleanSupportSq, nonWieferichLargePrimeCleanSupportSq] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := largePrimeCleanSupportSq n) (p := WieferichBase2)
+                (f := fun p => cleanNp n (z n) p))
+    _ = Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          (nonWieferichLargePrimeCleanSupportSq n).card := by
+            rw [sum_cleanNp_nonWieferichLargePrimeCleanSupportSq_eq_card n hz3]
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+            ac_rfl
+
+lemma sum_cleanNp_largePrimeCleanSupportSq_eq_card_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+      (largePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+  classical
+  have hpos :
+      ∀ p ∈ wieferichLargePrimeCleanSupportSq n, 0 < cleanNp n (z n) p := by
+    intro p hp
+    have hpClean : p ∈ largePrimeCleanSupportSq n := (Finset.mem_filter.mp hp).1
+    exact Nat.pos_of_ne_zero ((Finset.mem_filter.mp hpClean).2)
+  calc
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+      (nonWieferichLargePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+          exact sum_cleanNp_largePrimeCleanSupportSq_eq_nonWieferich_card_add_wieferich_sum n hz3
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card +
+          (Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (cleanNp n (z n) p - 1) + 1)) := by
+              refine congrArg (fun t => (nonWieferichLargePrimeCleanSupportSq n).card + t) ?_
+              refine Finset.sum_congr rfl ?_
+              intro p hp
+              exact (Nat.sub_add_cancel (Nat.succ_le_of_lt (hpos p hp))).symm
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card +
+          (Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) +
+            Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun _ => 1)) := by
+              rw [Finset.sum_add_distrib]
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card +
+          (Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) +
+            (wieferichLargePrimeCleanSupportSq n).card) := by
+              simp
+    _ = (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+            have hcard :
+                (wieferichLargePrimeCleanSupportSq n).card +
+                    (nonWieferichLargePrimeCleanSupportSq n).card =
+                  (largePrimeCleanSupportSq n).card := by
+              exact card_wieferich_add_card_nonWieferichLargePrimeCleanSupportSq n
+            omega
+
+lemma A_large_prime_decomp_sq_clean_of_not_represents {n : Nat}
+    (hNotRep : ¬ Represents n) :
+    (A n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => cleanNp n (z n) p) := by
+  classical
+  let badAt : Nat → Finset Nat := fun p => cleanBadAtSq n (z n) p
+  have hsubset :
+      A n (z n) ⊆ (largePrimeSupportSq n).biUnion badAt := by
+    intro k hkA
+    have hkB : k ∈ B n (z n) := A_subset_B_of_not_represents (z0 := z n) hNotRep hkA
+    have hkK : k ∈ K n := A_subset_K n (z n) hkA
+    rcases (Finset.mem_filter.mp hkB).2 with ⟨p, hp, hpgt, hmod0⟩
+    have hklt : 2 ^ k < n := C1 hkK
+    have hmPos : 0 < M n k := by
+      unfold M
+      exact Nat.sub_pos_of_lt hklt
+    have hp2dvd : p ^ 2 ∣ M n k := (Nat.dvd_iff_mod_eq_zero).2 hmod0
+    have hp2_le_m : p ^ 2 <= M n k := Nat.le_of_dvd hmPos hp2dvd
+    have hp2_le_n : p ^ 2 <= n := le_trans hp2_le_m (Nat.sub_le n (2 ^ k))
+    have hp_le_sq : p <= p ^ 2 := by
+      calc
+        p = p * 1 := by simp
+        _ <= p * p := Nat.mul_le_mul_left p (Nat.succ_le_of_lt hp.pos)
+        _ = p ^ 2 := by simp [pow_two]
+    have hp_le_n : p <= n := le_trans hp_le_sq hp2_le_n
+    have hpIcc : p ∈ Finset.Icc (z n + 1) n := Finset.mem_Icc.mpr
+      ⟨Nat.succ_le_of_lt hpgt, hp_le_n⟩
+    have hpLarge : p ∈ largePrimeSupport n := by
+      unfold largePrimeSupport
+      exact Finset.mem_filter.mpr ⟨hpIcc, hp⟩
+    have hpSq : p ∈ largePrimeSupportSq n := by
+      unfold largePrimeSupportSq
+      exact Finset.mem_filter.mpr ⟨hpLarge, hp2_le_n⟩
+    have hkBadAt : k ∈ badAt p := Finset.mem_filter.mpr ⟨hkA, hmod0⟩
+    exact Finset.mem_biUnion.mpr ⟨p, hpSq, hkBadAt⟩
+  calc
+    (A n (z n)).card <= ((largePrimeSupportSq n).biUnion badAt).card := Finset.card_le_card hsubset
+    _ <= Finset.sum (largePrimeSupportSq n) (fun p => (badAt p).card) := Finset.card_biUnion_le
+    _ = Finset.sum (largePrimeSupportSq n) (fun p => cleanNp n (z n) p) := by
+          simp [badAt, cleanNp]
+
+lemma A_large_prime_decomp_sq_cleanSupport_of_not_represents {n : Nat}
+    (hNotRep : ¬ Represents n) :
+    (A n (z n)).card <= Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+  calc
+    (A n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => cleanNp n (z n) p) := by
+      exact A_large_prime_decomp_sq_clean_of_not_represents hNotRep
+    _ = Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+      symm
+      exact sum_cleanNp_largePrimeSupportSq_eq_sum_largePrimeCleanSupportSq n
+
+lemma A_large_prime_decomp_sq_cleanSupport_nonWieferich_card_add_wieferich_sum_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (A n (z n)).card <=
+      (nonWieferichLargePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+  calc
+    (A n (z n)).card <= Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+      exact A_large_prime_decomp_sq_cleanSupport_of_not_represents hNotRep
+    _ = (nonWieferichLargePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+            exact sum_cleanNp_largePrimeCleanSupportSq_eq_nonWieferich_card_add_wieferich_sum n hz3
+
+lemma A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_excess_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (A n (z n)).card <=
+      (largePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+  calc
+    (A n (z n)).card <= Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+      exact A_large_prime_decomp_sq_cleanSupport_of_not_represents hNotRep
+    _ = (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+            exact sum_cleanNp_largePrimeCleanSupportSq_eq_card_add_wieferich_excess n hz3
+
+/-- Clean large-prime mass: clean support plus clean Wieferich excess. -/
+noncomputable def cleanLargePrimeMass (n : Nat) : Nat :=
+  (largePrimeCleanSupportSq n).card +
+    Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1)
+
+lemma A_large_prime_decomp_sq_cleanLargePrimeMass_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (A n (z n)).card <= cleanLargePrimeMass n := by
+  simpa [cleanLargePrimeMass] using
+    A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_excess_of_not_represents hNotRep hz3
+
+lemma card_K_le_smallPrimeBad_add_cleanLargePrimeMass_of_not_represents {n : Nat}
+    (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (K n).card <= (smallPrimeBad n (z n)).card + cleanLargePrimeMass n := by
+  have hKs :
+      (K n).card - (smallPrimeBad n (z n)).card <= cleanLargePrimeMass n := by
+    simpa [card_A_eq_card_K_sub_smallPrimeBad n (z n)] using
+      (A_large_prime_decomp_sq_cleanLargePrimeMass_of_not_represents hNotRep hz3)
+  have hK_le :
+      (K n).card <= cleanLargePrimeMass n + (smallPrimeBad n (z n)).card :=
+    (Nat.sub_le_iff_le_add).1 hKs
+  simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le
+
+lemma sum_cleanNp_largePrimeCleanSupportSq_le_sum_localOrderBound (n : Nat) :
+    Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+      Finset.sum (largePrimeCleanSupportSq n) (fun p => localOrderBound n p) := by
+  exact Finset.sum_le_sum (by
+    intro p hp
+    have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hp).1
+    have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+    calc
+      cleanNp n (z n) p <= Np n p := cleanNp_le_Np n (z n) p
+      _ <= localOrderBound n p := Np_le_localOrderBound_of_largePrimeSupport n p hpLarge)
+
+lemma cleanLargePrimeMass_le_card_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    cleanLargePrimeMass n <=
+      (largePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n)
+          (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+  classical
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  have hsplit :
+      Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+    symm
+    simpa [wieferichLargePrimeCleanSupportSq, nonWieferichLargePrimeCleanSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeCleanSupportSq n) (p := WieferichBase2) (f := fun p => cleanNp n (z n) p))
+  have hW :
+      Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+        Finset.sum (wieferichLargePrimeCleanSupportSq n)
+          (fun p => (L n + 1) / (2 * Nat.log 2 p) + 1) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpClean : p ∈ largePrimeCleanSupportSq n := (Finset.mem_filter.mp hp).1
+      have hpSq : p ∈ largePrimeSupportSq n := (Finset.mem_filter.mp hpClean).1
+      have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+      calc
+        cleanNp n (z n) p <= Np n p := cleanNp_le_Np n (z n) p
+        _ <= localOrderBound n p := Np_le_localOrderBound_of_largePrimeSupport n p hpLarge
+        _ <= (L n + 1) / (2 * Nat.log 2 p) + 1 := by
+              exact localOrderBound_le_logPrime_add_one_of_largePrimeSupportSq hz2 hpSq)
+  have hN :
+      Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+        (nonWieferichLargePrimeCleanSupportSq n).card := by
+    exact le_of_eq (sum_cleanNp_nonWieferichLargePrimeCleanSupportSq_eq_card n hz3)
+  have hcard :
+      (wieferichLargePrimeCleanSupportSq n).card +
+          (nonWieferichLargePrimeCleanSupportSq n).card =
+        (largePrimeCleanSupportSq n).card := by
+    exact card_wieferich_add_card_nonWieferichLargePrimeCleanSupportSq n
+  calc
+    cleanLargePrimeMass n =
+        Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+          symm
+          exact sum_cleanNp_largePrimeCleanSupportSq_eq_card_add_wieferich_excess n hz3
+    _ =
+        Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          Finset.sum (nonWieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := hsplit
+    _ <= Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p) + 1) +
+          (nonWieferichLargePrimeCleanSupportSq n).card := by
+          exact Nat.add_le_add hW hN
+    _ = Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) +
+          (wieferichLargePrimeCleanSupportSq n).card +
+            (nonWieferichLargePrimeCleanSupportSq n).card := by
+          rw [Finset.sum_add_distrib]
+          simp
+    _ = Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) +
+          ((wieferichLargePrimeCleanSupportSq n).card +
+            (nonWieferichLargePrimeCleanSupportSq n).card) := by
+          ac_rfl
+    _ = Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) +
+          (largePrimeCleanSupportSq n).card := by
+          rw [hcard]
+    _ = (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+          ac_rfl
+
+lemma A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_logPrime_excess_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (A n (z n)).card <=
+      (largePrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLargePrimeCleanSupportSq n)
+          (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+  exact le_trans
+    (A_large_prime_decomp_sq_cleanLargePrimeMass_of_not_represents hNotRep hz3)
+    (cleanLargePrimeMass_le_card_add_wieferich_logPrime_excess n hz3)
+
+lemma card_K_le_smallPrimeBad_add_cleanSupport_card_add_wieferich_logPrime_excess_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (K n).card <=
+      (smallPrimeBad n (z n)).card +
+        ((largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  have hKs :
+      (K n).card - (smallPrimeBad n (z n)).card <=
+        (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+    simpa [card_A_eq_card_K_sub_smallPrimeBad n (z n)] using
+      (A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_logPrime_excess_of_not_represents
+        hNotRep hz3)
+  have hK_le :
+      (K n).card <=
+        ((largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) +
+          (smallPrimeBad n (z n)).card :=
+    (Nat.sub_le_iff_le_add).1 hKs
+  simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le
+
+lemma sum_localOrderBound_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) =
+      (nonWieferichSubsupport S).card +
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) := by
+  classical
+  have hNonSub : nonWieferichSubsupport S ⊆ nonWieferichLargePrimeActiveSupportSq n := by
+    intro p hp
+    have hpS : p ∈ S := by
+      simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+    have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+    have hpNot : ¬ WieferichBase2 p := by
+      simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+    exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+    _ = Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          (nonWieferichSubsupport S).card := by
+            rw [sum_localOrderBound_nonWieferichLargePrimeActiveSubset_eq_card
+              n (nonWieferichSubsupport S) hNonSub hz3]
+    _ = (nonWieferichSubsupport S).card +
+          Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) := by
+            ac_rfl
+
+lemma activeWieferich_one_split_eq_activeSubset_one_add_excess
+    (n : Nat) (S : Finset Nat) :
+    (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) + (nonWieferichSubsupport S).card =
+      S.card + (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 1) := by
+  classical
+  let a := (wieferichSubsupport S).card
+  let b := (nonWieferichSubsupport S).card
+  let h := (L n + 1) / 2 + 1
+  have hh : 1 <= h := by
+    dsimp [h]
+    omega
+  have hab : a + b = S.card := by
+    dsimp [a, b]
+    simpa [wieferichSubsupport, nonWieferichSubsupport] using
+      (Finset.card_filter_add_card_filter_not (s := S) (p := WieferichBase2))
+  calc
+    a * h + b = a * ((h - 1) + 1) + b := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 1) + a + b := by
+          rw [Nat.mul_add, Nat.mul_one]
+    _ = a * (h - 1) + (a + b) := by omega
+    _ = a * (h - 1) + S.card := by rw [hab]
+    _ = S.card + a * (h - 1) := by ac_rfl
+    _ = S.card + (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 1) := by
+          rfl
+
+lemma activeWieferich_one_split_eq_activeSubset_one_add_excess_of_h
+    (S : Finset Nat) (h : Nat) (hh : 1 <= h) :
+    (wieferichSubsupport S).card * h + (nonWieferichSubsupport S).card =
+      S.card + (wieferichSubsupport S).card * (h - 1) := by
+  classical
+  let a := (wieferichSubsupport S).card
+  let b := (nonWieferichSubsupport S).card
+  have hab : a + b = S.card := by
+    dsimp [a, b]
+    simpa [wieferichSubsupport, nonWieferichSubsupport] using
+      (Finset.card_filter_add_card_filter_not (s := S) (p := WieferichBase2))
+  calc
+    a * h + b = a * ((h - 1) + 1) + b := by rw [Nat.sub_add_cancel hh]
+    _ = a * (h - 1) + a + b := by rw [Nat.mul_add, Nat.mul_one]
+    _ = a * (h - 1) + (a + b) := by omega
+    _ = a * (h - 1) + S.card := by rw [hab]
+    _ = S.card + a * (h - 1) := by ac_rfl
+    _ = S.card + (wieferichSubsupport S).card * (h - 1) := by rfl
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_excess
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card + (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 1) := by
+  classical
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+    _ <= (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) +
+          (nonWieferichSubsupport S).card := by
+            exact Nat.add_le_add
+              (by
+                calc
+                  Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) <=
+                      Finset.sum (wieferichSubsupport S) (fun _ => (L n + 1) / 2 + 1) := by
+                        exact Finset.sum_le_sum (by
+                          intro p hpS
+                          have hpAct : p ∈ largePrimeActiveSupportSq n := by
+                            have hpMem : p ∈ S := by
+                              simpa [wieferichSubsupport] using (Finset.mem_filter.mp hpS).1
+                            exact hS hpMem
+                          have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+                          exact localOrderBound_le_half_add_one_of_largePrimeSupportSq hz2 hpSq)
+                  _ = (wieferichSubsupport S).card * ((L n + 1) / 2 + 1) := by simp)
+              (sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_card
+                n (nonWieferichSubsupport S)
+                (by
+                  intro p hp
+                  have hpS : p ∈ S := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+                  have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+                  have hpNot : ¬ WieferichBase2 p := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+                  exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩)
+                hz3)
+    _ = S.card + (wieferichSubsupport S).card * (((L n + 1) / 2 + 1) - 1) := by
+          exact activeWieferich_one_split_eq_activeSubset_one_add_excess n S
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_third_excess
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card + (wieferichSubsupport S).card * (((L n + 1) / 3 + 1) - 1) := by
+  classical
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+    _ <= (wieferichSubsupport S).card * ((L n + 1) / 3 + 1) +
+          (nonWieferichSubsupport S).card := by
+            exact Nat.add_le_add
+              (by
+                calc
+                  Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) <=
+                      Finset.sum (wieferichSubsupport S) (fun _ => (L n + 1) / 3 + 1) := by
+                        exact Finset.sum_le_sum (by
+                          intro p hpS
+                          have hpAct : p ∈ largePrimeActiveSupportSq n := by
+                            have hpMem : p ∈ S := by
+                              simpa [wieferichSubsupport] using (Finset.mem_filter.mp hpS).1
+                            exact hS hpMem
+                          have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+                          exact localOrderBound_le_third_add_one_of_largePrimeSupportSq hz3 hpSq)
+                  _ = (wieferichSubsupport S).card * ((L n + 1) / 3 + 1) := by simp)
+              (sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_card
+                n (nonWieferichSubsupport S)
+                (by
+                  intro p hp
+                  have hpS : p ∈ S := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+                  have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+                  have hpNot : ¬ WieferichBase2 p := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+                  exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩)
+                hz3)
+    _ = S.card + (wieferichSubsupport S).card * (((L n + 1) / 3 + 1) - 1) := by
+          exact activeWieferich_one_split_eq_activeSubset_one_add_excess_of_h
+            S (((L n + 1) / 3) + 1) (by omega)
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_div_excess
+    (n : Nat) (S : Finset Nat) (d : Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n)
+    (hpow : 2 ^ d < (z n + 1) ^ 2) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card + (wieferichSubsupport S).card * ((((L n + 1) / (d + 1)) + 1) - 1) := by
+  classical
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+            symm
+            simpa [wieferichSubsupport, nonWieferichSubsupport] using
+              (Finset.sum_filter_add_sum_filter_not
+                (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+    _ <= (wieferichSubsupport S).card * (((L n + 1) / (d + 1)) + 1) +
+          (nonWieferichSubsupport S).card := by
+            exact Nat.add_le_add
+              (by
+                calc
+                  Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) <=
+                      Finset.sum (wieferichSubsupport S) (fun _ => ((L n + 1) / (d + 1)) + 1) := by
+                        exact Finset.sum_le_sum (by
+                          intro p hpS
+                          have hpAct : p ∈ largePrimeActiveSupportSq n := by
+                            have hpMem : p ∈ S := by
+                              simpa [wieferichSubsupport] using (Finset.mem_filter.mp hpS).1
+                            exact hS hpMem
+                          have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+                          exact localOrderBound_le_div_add_one_of_largePrimeSupportSq hz2 hpSq hpow)
+                  _ = (wieferichSubsupport S).card * (((L n + 1) / (d + 1)) + 1) := by simp)
+              (sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_card
+                n (nonWieferichSubsupport S)
+                (by
+                  intro p hp
+                  have hpS : p ∈ S := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+                  have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+                  have hpNot : ¬ WieferichBase2 p := by
+                    simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+                  exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩)
+                hz3)
+    _ = S.card + (wieferichSubsupport S).card * ((((L n + 1) / (d + 1)) + 1) - 1) := by
+          exact activeWieferich_one_split_eq_activeSubset_one_add_excess_of_h
+            S (((L n + 1) / (d + 1)) + 1) (Nat.succ_le_succ (Nat.zero_le _))
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_log_excess
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card + (wieferichSubsupport S).card *
+        ((((L n + 1) / (2 * Nat.log 2 (z n + 1))) + 1) - 1) := by
+  have hm : 2 <= z n + 1 := by omega
+  have hm1 : 1 < z n + 1 := lt_of_lt_of_le (by decide : 1 < 2) hm
+  have hpow :
+      2 ^ (2 * Nat.log 2 (z n + 1) - 1) < (z n + 1) ^ 2 :=
+    two_pow_two_mul_log_sub_one_lt_sq hm
+  have hmain :=
+    sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_div_excess
+      n S (2 * Nat.log 2 (z n + 1) - 1) hS hz3 hpow
+  have hlogPos : 1 <= 2 * Nat.log 2 (z n + 1) := by
+    have hlog : 0 < Nat.log 2 (z n + 1) := Nat.log_pos Nat.one_lt_two hm1
+    exact Nat.succ_le_of_lt (Nat.mul_pos (by decide : 0 < 2) hlog)
+  have hden :
+      (2 * Nat.log 2 (z n + 1) - 1) + 1 = 2 * Nat.log 2 (z n + 1) :=
+    Nat.sub_add_cancel hlogPos
+  simpa [hden] using hmain
+
+lemma sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_logPrime_excess
+    (n : Nat) (S : Finset Nat)
+    (hS : S ⊆ largePrimeActiveSupportSq n) (hz3 : 3 <= z n) :
+    Finset.sum S (fun p => localOrderBound n p) <=
+      S.card + Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+  classical
+  have hz2 : 2 <= z n := le_trans (by decide : 2 <= 3) hz3
+  have hsplit :
+      Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := by
+    symm
+    simpa [wieferichSubsupport, nonWieferichSubsupport] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := S) (p := WieferichBase2) (f := fun p => localOrderBound n p))
+  have hW :
+      Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) <=
+        Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p) + 1) := by
+    exact Finset.sum_le_sum (by
+      intro p hpS
+      have hpAct : p ∈ largePrimeActiveSupportSq n := by
+        have hpMem : p ∈ S := by
+          simpa [wieferichSubsupport] using (Finset.mem_filter.mp hpS).1
+        exact hS hpMem
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact localOrderBound_le_logPrime_add_one_of_largePrimeSupportSq hz2 hpSq)
+  have hN :
+      Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) <=
+        (nonWieferichSubsupport S).card := by
+    exact sum_localOrderBound_nonWieferichLargePrimeActiveSubset_le_card
+      n (nonWieferichSubsupport S)
+      (by
+        intro p hp
+        have hpS : p ∈ S := by
+          simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).1
+        have hpAct : p ∈ largePrimeActiveSupportSq n := hS hpS
+        have hpNot : ¬ WieferichBase2 p := by
+          simpa [nonWieferichSubsupport] using (Finset.mem_filter.mp hp).2
+        exact Finset.mem_filter.mpr ⟨hpAct, hpNot⟩)
+      hz3
+  have hcard :
+      (wieferichSubsupport S).card + (nonWieferichSubsupport S).card = S.card := by
+    simpa [wieferichSubsupport, nonWieferichSubsupport] using
+      (Finset.card_filter_add_card_filter_not (s := S) (p := WieferichBase2))
+  calc
+    Finset.sum S (fun p => localOrderBound n p) =
+        Finset.sum (wieferichSubsupport S) (fun p => localOrderBound n p) +
+          Finset.sum (nonWieferichSubsupport S) (fun p => localOrderBound n p) := hsplit
+    _ <= Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p) + 1) +
+          (nonWieferichSubsupport S).card := by
+            exact Nat.add_le_add hW hN
+    _ = Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p)) +
+          (wieferichSubsupport S).card + (nonWieferichSubsupport S).card := by
+            rw [Finset.sum_add_distrib]
+            simp
+    _ = Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p)) +
+          ((wieferichSubsupport S).card + (nonWieferichSubsupport S).card) := by
+            ac_rfl
+    _ = Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p)) + S.card := by
+            rw [hcard]
+    _ = S.card + Finset.sum (wieferichSubsupport S) (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+            ac_rfl
+
+lemma sum_cleanNp_veryLargePrimeCleanSupportSq_le_L_add_one (n : Nat) :
+    Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <= L n + 1 := by
+  have hCleanNp :
+      Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+        Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => Np n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      exact cleanNp_le_Np n (z n) p)
+  have hSubset :
+      Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => Np n p) <=
+        Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) := by
+    exact Finset.sum_le_sum_of_subset_of_nonneg
+      (veryLargePrimeCleanSupportSq_subset_veryLargePrimeActiveSupportSq n)
+      (by
+        intro p hp1 hp2
+        exact Nat.zero_le (Np n p))
+  exact le_trans hCleanNp <|
+    le_trans hSubset <|
+      le_trans (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) (card_K_le n)
+
+lemma sum_cleanNp_lowFourthPrimeCleanSupportSq_le_card_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+      (lowFourthPrimeCleanSupportSq n).card +
+        Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+          (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+  have hCleanLocal :
+      Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) <=
+        Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpClean : p ∈ largePrimeCleanSupportSq n := lowFourthPrimeCleanSupportSq_subset n hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n :=
+        largePrimeCleanSupportSq_subset_largePrimeActiveSupportSq n hpClean
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      have hpLarge : p ∈ largePrimeSupport n := (Finset.mem_filter.mp hpSq).1
+      calc
+        cleanNp n (z n) p <= Np n p := cleanNp_le_Np n (z n) p
+        _ <= localOrderBound n p := Np_le_localOrderBound_of_largePrimeSupport n p hpLarge)
+  have hLocal :
+      Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFourthPrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+    simpa [wieferichSubsupport, wieferichLowFourthPrimeCleanSupportSq] using
+      (sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_logPrime_excess
+        n (lowFourthPrimeCleanSupportSq n)
+        (lowFourthPrimeCleanSupportSq_subset_largePrimeActiveSupportSq n) hz3)
+  exact le_trans hCleanLocal hLocal
+
+lemma cleanLargePrimeMass_le_lowFourth_card_add_L_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    cleanLargePrimeMass n <=
+      (L n + 1) +
+        ((lowFourthPrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  have hsplit :
+      Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) =
+        Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+    symm
+    simpa [veryLargePrimeCleanSupportSq, lowFourthPrimeCleanSupportSq, Nat.not_lt] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeCleanSupportSq n) (p := fun p => n < p ^ 4)
+        (f := fun p => cleanNp n (z n) p))
+  calc
+    cleanLargePrimeMass n =
+        Finset.sum (largePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := by
+          symm
+          exact sum_cleanNp_largePrimeCleanSupportSq_eq_card_add_wieferich_excess n hz3
+    _ = Finset.sum (veryLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) +
+          Finset.sum (lowFourthPrimeCleanSupportSq n) (fun p => cleanNp n (z n) p) := hsplit
+    _ <= (L n + 1) +
+          ((lowFourthPrimeCleanSupportSq n).card +
+            Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+          exact Nat.add_le_add
+            (sum_cleanNp_veryLargePrimeCleanSupportSq_le_L_add_one n)
+            (sum_cleanNp_lowFourthPrimeCleanSupportSq_le_card_add_wieferich_logPrime_excess n hz3)
+
+lemma A_large_prime_decomp_sq_cleanSupport_lowFourth_card_add_L_add_wieferich_logPrime_excess_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (A n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  exact le_trans
+    (A_large_prime_decomp_sq_cleanLargePrimeMass_of_not_represents hNotRep hz3)
+    (cleanLargePrimeMass_le_lowFourth_card_add_L_add_wieferich_logPrime_excess n hz3)
+
+lemma card_K_le_smallPrimeBad_add_cleanSupport_lowFourth_card_add_L_add_wieferich_logPrime_excess_of_not_represents
+    {n : Nat} (hNotRep : ¬ Represents n) (hz3 : 3 <= z n) :
+    (K n).card <=
+      (smallPrimeBad n (z n)).card +
+        ((L n + 1) +
+          ((lowFourthPrimeCleanSupportSq n).card +
+            Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+              (fun p => (L n + 1) / (2 * Nat.log 2 p)))) := by
+  have hKs :
+      (K n).card - (smallPrimeBad n (z n)).card <=
+        (L n + 1) +
+          ((lowFourthPrimeCleanSupportSq n).card +
+            Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+    simpa [card_A_eq_card_K_sub_smallPrimeBad n (z n)] using
+      (A_large_prime_decomp_sq_cleanSupport_lowFourth_card_add_L_add_wieferich_logPrime_excess_of_not_represents
+        hNotRep hz3)
+  have hK_le :
+      (K n).card <=
+        ((L n + 1) +
+          ((lowFourthPrimeCleanSupportSq n).card +
+            Finset.sum (wieferichLowFourthPrimeCleanSupportSq n)
+              (fun p => (L n + 1) / (2 * Nat.log 2 p)))) +
+          (smallPrimeBad n (z n)).card := by
+    exact (Nat.sub_le_iff_le_add).1 hKs
+  simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using hK_le
 
 /-- If `n ≡ 1 [MOD 4]` and `2 ≤ z n`, then `k = 0` is excluded from `A n (z n)`. -/
 lemma zero_not_mem_A_of_mod4 {n : Nat}
@@ -1510,7 +4230,9 @@ lemma pow_two_mod_one_sixty_nine_of_mod156_eq11 {k : Nat} (hkmod : k % 156 = 11)
     _ = 20 := by norm_num
 
 lemma pow_two_mod_sixteen_eighty_one_cycle (t : Nat) : (2 ^ (820 * t)) % 1681 = 1 := by
-  have hbase : 2 ^ 820 % 1681 = 1 := by native_decide
+  have hbase : 2 ^ 820 % 1681 = 1 := by
+    set_option maxRecDepth 1000000 in
+      decide
   induction t with
   | zero => norm_num
   | succ t ih =>
@@ -1542,7 +4264,9 @@ lemma pow_two_mod_sixteen_eighty_one_of_mod820_eq2 {k : Nat} (hkmod : k % 820 = 
     _ = 4 := by norm_num
 
 lemma pow_two_mod_thirteen_sixty_nine_cycle (t : Nat) : (2 ^ (1332 * t)) % 1369 = 1 := by
-  have hbase : 2 ^ 1332 % 1369 = 1 := by native_decide
+  have hbase : 2 ^ 1332 % 1369 = 1 := by
+    set_option maxRecDepth 1000000 in
+      decide
   induction t with
   | zero => norm_num
   | succ t ih =>
@@ -1574,7 +4298,9 @@ lemma pow_two_mod_thirteen_sixty_nine_of_mod1332_eq5 {k : Nat} (hkmod : k % 1332
     _ = 32 := by norm_num
 
 lemma pow_two_mod_thirty_seven_twenty_one_cycle (t : Nat) : (2 ^ (3660 * t)) % 3721 = 1 := by
-  have hbase : 2 ^ 3660 % 3721 = 1 := by native_decide
+  have hbase : 2 ^ 3660 % 3721 = 1 := by
+    set_option maxRecDepth 1000000 in
+      decide
   induction t with
   | zero => norm_num
   | succ t ih =>
@@ -4055,6 +6781,26 @@ lemma G1_large_prime_decomp_sq_localOrder (n : Nat) :
         intro p hp
         exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hp).1))
 
+lemma G1_large_prime_decomp_sq_active (n : Nat) :
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) :=
+      G1_large_prime_decomp_sq n
+    _ = Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      symm
+      exact sum_Np_largePrimeSupportSq_eq_sum_largePrimeActiveSupportSq n
+
+lemma G1_large_prime_decomp_sq_active_localOrder (n : Nat) :
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) :=
+      G1_large_prime_decomp_sq_active n
+    _ <= Finset.sum (largePrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+      exact Finset.sum_le_sum (by
+        intro p hp
+        have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hp
+        exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+
 lemma G1_large_prime_decomp_sq_localOrder_coarse (n : Nat) :
     (B n (z n)).card <= (largePrimeSupportSq n).card * (L n + 1) := by
   exact le_trans (G1_large_prime_decomp_sq_localOrder n) (sum_localOrderBound_largeSq_le n)
@@ -4063,6 +6809,893 @@ lemma G1_large_prime_decomp_sq_localOrder_half (n : Nat) (hz2 : 2 <= z n) :
     (B n (z n)).card <= (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) := by
   exact le_trans (G1_large_prime_decomp_sq_localOrder n)
     (sum_localOrderBound_largeSq_le_half_add_one n hz2)
+
+lemma G1_large_prime_decomp_sq_localOrder_wieferich_split (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+        Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) := by
+  exact le_trans (G1_large_prime_decomp_sq_localOrder n)
+    (sum_localOrderBound_largeSq_le_wieferich_split n hz2)
+
+lemma G1_large_prime_decomp_sq_localOrder_wieferich_three_split (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+        (nonWieferichLargePrimeSupportSq n).card * 3 := by
+  exact le_trans (G1_large_prime_decomp_sq_localOrder n)
+    (sum_localOrderBound_largeSq_le_wieferich_three_split n hz2)
+
+lemma G1_large_prime_decomp_sq_localOrder_supportSq_three_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (largePrimeSupportSq n).card * 3 +
+        (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  exact le_trans (G1_large_prime_decomp_sq_localOrder n)
+    (sum_localOrderBound_largeSq_le_supportSq_three_add_wieferich_excess n hz2)
+
+lemma G1_large_prime_decomp_sq_active_localOrder_supportSq_three_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (largePrimeActiveSupportSq n).card * 3 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) := by
+  exact le_trans (G1_large_prime_decomp_sq_active_localOrder n)
+    (sum_localOrderBound_largePrimeActiveSq_le_supportSq_three_add_wieferich_excess n hz2)
+
+lemma G1_large_prime_decomp_sq_active_localOrder_supportSq_two_add_wieferich_excess_plus_one
+    (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (largePrimeActiveSupportSq n).card * 2 + 1 +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+  exact le_trans (G1_large_prime_decomp_sq_active_localOrder n)
+    (sum_localOrderBound_largePrimeActiveSq_le_supportSq_two_add_wieferich_excess_plus_one n hz2)
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_two_add_L_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) +
+        (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+  have hBase :
+      (largePrimeActiveSupportSq n).card * 2 + 1 <=
+        (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) := by
+    calc
+      (largePrimeActiveSupportSq n).card * 2 + 1 <=
+          ((lowFourthPrimeActiveSupportSq n).card + (L n + 1)) * 2 + 1 := by
+            exact Nat.add_le_add_right
+              (Nat.mul_le_mul_right 2 (card_largePrimeActiveSupportSq_le_lowFourth_add_L_add_one n))
+              1
+      _ = (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) := by
+            rw [Nat.add_mul]
+            ac_rfl
+  calc
+    (B n (z n)).card <=
+        (largePrimeActiveSupportSq n).card * 2 + 1 +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+            exact G1_large_prime_decomp_sq_active_localOrder_supportSq_two_add_wieferich_excess_plus_one
+              n hz2
+    _ <= (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) +
+          (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+            exact Nat.add_le_add_right hBase
+              ((wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2))
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            (((L n + 1) / 2 + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n := lowFourthPrimeActiveSupportSq_subset n hp
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            (((L n + 1) / 2 + 1) - 1) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_excess
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card)
+    _ <= (K n).card +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card)
+    _ <= (L n + 1) +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_lowFourth_nonWieferich_card_add_L_add_wieferich_local
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => localOrderBound n p)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n := lowFourthPrimeActiveSupportSq_subset n hp
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) =
+        (nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => localOrderBound n p) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card)
+    _ = (K n).card +
+          ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => localOrderBound n p)) := by
+            rw [hLowLocal]
+    _ <= (L n + 1) +
+          ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => localOrderBound n p)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_lowFourth_nonWieferich_card_add_L_add_wieferich_Np
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => Np n p)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowExact :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        (nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => Np n p) := by
+    exact sum_Np_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ = (K n).card +
+          ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => Np n p)) := by
+            rw [hLowExact]
+    _ <= (L n + 1) +
+          ((nonWieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => Np n p)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_lowFourth_card_add_L_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => Np n p - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowExact :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        (lowFourthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => Np n p - 1) := by
+    exact sum_Np_largePrimeActiveSubset_eq_card_add_wieferich_excess
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ = (K n).card +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => Np n p - 1)) := by
+            rw [hLowExact]
+    _ <= (L n + 1) +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => Np n p - 1)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_third_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            (((L n + 1) / 3 + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n := lowFourthPrimeActiveSupportSq_subset n hp
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            (((L n + 1) / 3 + 1) - 1) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_third_excess
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card)
+    _ <= (K n).card +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              (((L n + 1) / 3 + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card)
+    _ <= (L n + 1) +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              (((L n + 1) / 3 + 1) - 1)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_div_excess
+    (n d : Nat) (hz3 : 3 <= z n) (hpow : 2 ^ d < (z n + 1) ^ 2) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            ((((L n + 1) / (d + 1)) + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n := lowFourthPrimeActiveSupportSq_subset n hp
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            ((((L n + 1) / (d + 1)) + 1) - 1) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_div_excess
+      n (lowFourthPrimeActiveSupportSq n) d (lowFourthPrimeActiveSupportSq_subset n) hz3 hpow
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card)
+    _ <= (K n).card +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              ((((L n + 1) / (d + 1)) + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card)
+    _ <= (L n + 1) +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+              ((((L n + 1) / (d + 1)) + 1) - 1)) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_log_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          (wieferichSubsupport (lowFourthPrimeActiveSupportSq n)).card *
+            ((((L n + 1) / (2 * Nat.log 2 (z n + 1))) + 1) - 1)) := by
+  have hm : 2 <= z n + 1 := by omega
+  have hm1 : 1 < z n + 1 := lt_of_lt_of_le (by decide : 1 < 2) hm
+  have hpow :
+      2 ^ (2 * Nat.log 2 (z n + 1) - 1) < (z n + 1) ^ 2 :=
+    two_pow_two_mul_log_sub_one_lt_sq hm
+  have hmain :=
+    G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_div_excess
+      n (2 * Nat.log 2 (z n + 1) - 1) hz3 hpow
+  have hlogPos : 1 <= 2 * Nat.log 2 (z n + 1) := by
+    have hlog : 0 < Nat.log 2 (z n + 1) := Nat.log_pos Nat.one_lt_two hm1
+    exact Nat.succ_le_of_lt (Nat.mul_pos (by decide : 0 < 2) hlog)
+  have hden :
+      (2 * Nat.log 2 (z n + 1) - 1) + 1 = 2 * Nat.log 2 (z n + 1) :=
+    Nat.sub_add_cancel hlogPos
+  simpa [hden] using hmain
+
+lemma G1_large_prime_decomp_sq_active_localOrder_lowFourth_one_add_L_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) +
+        ((lowFourthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  classical
+  have hsplit :
+      Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+    simpa [veryLargePrimeActiveSupportSq, lowFourthPrimeActiveSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeActiveSupportSq n) (p := fun p => n < p ^ 4) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpAct : p ∈ largePrimeActiveSupportSq n := lowFourthPrimeActiveSupportSq_subset n hp
+      have hpSq : p ∈ largePrimeSupportSq n := largePrimeActiveSupportSq_subset n hpAct
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFourthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_logPrime_excess
+      n (lowFourthPrimeActiveSupportSq n) (lowFourthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeActiveSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq_active n
+    _ = Finset.sum (veryLargePrimeActiveSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_veryLargePrimeActiveSupportSq_le_cardK n) _
+    _ <= (K n).card + Finset.sum (lowFourthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card)
+    _ <= (K n).card +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card)
+    _ <= (L n + 1) +
+          ((lowFourthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFourthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_right (card_K_le n) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_localOrder_two_add_wieferich_excess
+    (n : Nat) (hz2 : 2 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowSixthPrimeActiveSupportSq n).card * 2 + 1 +
+          (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2)) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowSixthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowSixthPrimeActiveSupportSq n).card * 2 + 1 +
+          (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) := by
+    simpa [wieferichLowSixthPrimeActiveSupportSq] using
+      (sum_localOrderBound_largePrimeActiveSubset_le_two_mul_card_add_wieferich_excess_plus_one
+        n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz2)
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card * 2 + 1 +
+            (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card * 2 + 1 +
+            (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_localOrder_one_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowSixthPrimeActiveSupportSq n).card +
+          (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowSixthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowSixthPrimeActiveSupportSq n).card +
+          (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1) := by
+    simpa [wieferichLowSixthPrimeActiveSupportSq] using
+      (sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_excess
+        n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz3)
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            (wieferichLowSixthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_nonWieferich_card_add_wieferich_local
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => localOrderBound n p)) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowSixthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) =
+        (nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => localOrderBound n p) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+      n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ = (K n).card * 2 +
+          ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => localOrderBound n p)) := by
+            rw [hLowLocal]
+    _ <= (L n + 1) * 2 +
+          ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => localOrderBound n p)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_nonWieferich_card_add_wieferich_Np
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => Np n p)) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowExact :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) =
+        (nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => Np n p) := by
+    exact sum_Np_largePrimeActiveSubset_eq_nonWieferich_card_add_wieferich_sum
+      n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ = (K n).card * 2 +
+          ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => Np n p)) := by
+            rw [hLowExact]
+    _ <= (L n + 1) * 2 +
+          ((nonWieferichSubsupport (lowSixthPrimeActiveSupportSq n)).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => Np n p)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_card_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowSixthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => Np n p - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowExact :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) =
+        (lowSixthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => Np n p - 1) := by
+    exact sum_Np_largePrimeActiveSubset_eq_card_add_wieferich_excess
+      n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ = (K n).card * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => Np n p - 1)) := by
+            rw [hLowExact]
+    _ <= (L n + 1) * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => Np n p - 1)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highSixth_lowSixthActive_localOrder_one_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowSixthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  classical
+  have hsplit :
+      Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highSixthPrimeSupportSq, lowSixthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 6) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowSixthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowSixthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_logPrime_excess
+      n (lowSixthPrimeActiveSupportSq n) (lowSixthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highSixthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highSixthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowSixthPrimeSupportSq_eq_sum_lowSixthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowSixthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowSixthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowSixthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highFifth_lowFifthActive_localOrder_one_add_wieferich_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowFifthPrimeActiveSupportSq n).card +
+          (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highFifthPrimeSupportSq, lowFifthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 5) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowFifthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFifthPrimeActiveSupportSq n).card +
+          (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1) := by
+    simpa [wieferichLowFifthPrimeActiveSupportSq] using
+      (sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_excess
+        n (lowFifthPrimeActiveSupportSq n) (lowFifthPrimeActiveSupportSq_subset n) hz3)
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highFifthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowFifthPrimeSupportSq_eq_sum_lowFifthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 1)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highFifth_lowFifthActive_localOrder_one_add_wieferich_third_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowFifthPrimeActiveSupportSq n).card +
+          (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 3 + 1) - 1)) := by
+  classical
+  have hsplit :
+      Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highFifthPrimeSupportSq, lowFifthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 5) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowFifthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFifthPrimeActiveSupportSq n).card +
+          (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 3 + 1) - 1) := by
+    simpa [wieferichLowFifthPrimeActiveSupportSq] using
+      (sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_third_excess
+        n (lowFifthPrimeActiveSupportSq n) (lowFifthPrimeActiveSupportSq_subset n) hz3)
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highFifthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowFifthPrimeSupportSq_eq_sum_lowFifthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 3 + 1) - 1)) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            (wieferichLowFifthPrimeActiveSupportSq n).card * (((L n + 1) / 3 + 1) - 1)) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
+
+lemma G1_large_prime_decomp_sq_highFifth_lowFifthActive_localOrder_one_add_wieferich_logPrime_excess
+    (n : Nat) (hz3 : 3 <= z n) :
+    (B n (z n)).card <=
+      (L n + 1) * 2 +
+        ((lowFifthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFifthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+  classical
+  have hsplit :
+      Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) =
+        Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+    simpa [highFifthPrimeSupportSq, lowFifthPrimeSupportSq] using
+      (Finset.sum_filter_add_sum_filter_not
+        (s := largePrimeSupportSq n) (p := fun p => n < p ^ 5) (f := fun p => Np n p))
+  have hLowNp :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) <=
+        Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+    exact Finset.sum_le_sum (by
+      intro p hp
+      have hpSq : p ∈ largePrimeSupportSq n :=
+        lowFifthPrimeSupportSq_subset n ((Finset.mem_filter.mp hp).1)
+      exact Np_le_localOrderBound_of_largePrimeSupport n p ((Finset.mem_filter.mp hpSq).1))
+  have hLowLocal :
+      Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) <=
+        (lowFifthPrimeActiveSupportSq n).card +
+          Finset.sum (wieferichSubsupport (lowFifthPrimeActiveSupportSq n))
+            (fun p => (L n + 1) / (2 * Nat.log 2 p)) := by
+    exact sum_localOrderBound_largePrimeActiveSubset_le_card_add_wieferich_logPrime_excess
+      n (lowFifthPrimeActiveSupportSq n) (lowFifthPrimeActiveSupportSq_subset n) hz3
+  calc
+    (B n (z n)).card <= Finset.sum (largePrimeSupportSq n) (fun p => Np n p) := by
+      exact G1_large_prime_decomp_sq n
+    _ = Finset.sum (highFifthPrimeSupportSq n) (fun p => Np n p) +
+          Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            symm
+            exact hsplit
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeSupportSq n) (fun p => Np n p) := by
+            exact Nat.add_le_add_right (sum_Np_highFifthPrimeSupportSq_le_two_mul_cardK n) _
+    _ = (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => Np n p) := by
+            rw [sum_Np_lowFifthPrimeSupportSq_eq_sum_lowFifthPrimeActiveSupportSq]
+    _ <= (K n).card * 2 + Finset.sum (lowFifthPrimeActiveSupportSq n) (fun p => localOrderBound n p) := by
+            exact Nat.add_le_add_left hLowNp ((K n).card * 2)
+    _ <= (K n).card * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFifthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_left hLowLocal ((K n).card * 2)
+    _ <= (L n + 1) * 2 +
+          ((lowFifthPrimeActiveSupportSq n).card +
+            Finset.sum (wieferichSubsupport (lowFifthPrimeActiveSupportSq n))
+              (fun p => (L n + 1) / (2 * Nat.log 2 p))) := by
+            exact Nat.add_le_add_right (Nat.mul_le_mul_right 2 (card_K_le n)) _
 
 /-- G2 (coarse form): summing local bounds over large-prime support. -/
 lemma G2_large_prime_via_local (n : Nat) :
@@ -4393,9 +8026,110 @@ def G3_supportSq_bound_eventually_half : Prop :=
   exists N : Nat, forall n : Nat, N <= n -> Odd n ->
     (largePrimeSupportSq n).card * ((L n + 1) / 2 + 1) < L n
 
+/--
+Square-truncated large-prime condition with an explicit base-2 Wieferich split:
+the non-Wieferich part pays the sharper `(L n + 1) / p + 1` local cost, while the
+Wieferich remainder keeps the older half-factor bound.
+-/
+def G3_supportSq_bound_eventually_wieferichSplit : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+      Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) < L n
+
+/-- Slackened Wieferich-split large-prime condition. -/
+def G3_supportSq_bound_eventually_wieferichSplit_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+      Finset.sum (nonWieferichLargePrimeSupportSq n) (fun p => (L n + 1) / p + 1) < L n - C
+
+/--
+Coarser but simpler square-truncated Wieferich split:
+the non-Wieferich contribution is compressed to the constant local bound `3`.
+-/
+def G3_supportSq_bound_eventually_wieferichThreeSplit : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+      (nonWieferichLargePrimeSupportSq n).card * 3 < L n
+
+/-- Slackened constant-`3` Wieferich split. -/
+def G3_supportSq_bound_eventually_wieferichThreeSplit_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (wieferichLargePrimeSupportSq n).card * ((L n + 1) / 2 + 1) +
+      (nonWieferichLargePrimeSupportSq n).card * 3 < L n - C
+
+/--
+Compressed square-range criterion:
+pay `3` for every square-range large prime, plus only the Wieferich excess over `3`.
+-/
+def G3_supportSq_bound_eventually_wieferichExcess : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeSupportSq n).card * 3 +
+      (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) < L n
+
+/-- Slackened Wieferich-excess criterion. -/
+def G3_supportSq_bound_eventually_wieferichExcess_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeSupportSq n).card * 3 +
+      (wieferichLargePrimeSupportSq n).card * (((L n + 1) / 2 + 1) - 3) < L n - C
+
+/--
+Active-support version of the Wieferich-excess criterion:
+only primes with `Np n p ≠ 0` are counted.
+-/
+def G3_activeSupportSq_bound_eventually_wieferichExcess : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeActiveSupportSq n).card * 3 +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) < L n
+
+/-- Slackened active-support Wieferich-excess criterion. -/
+def G3_activeSupportSq_bound_eventually_wieferichExcess_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeActiveSupportSq n).card * 3 +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 3) < L n - C
+
+/--
+Stronger active-support criterion:
+the non-Wieferich active part costs only `2` per prime, with one possible endpoint bonus.
+-/
+def G3_activeSupportSq_bound_eventually_wieferichExcess_two : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeActiveSupportSq n).card * 2 + 1 +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) < L n
+
+/-- Slackened version of the stronger active-support criterion. -/
+def G3_activeSupportSq_bound_eventually_wieferichExcess_two_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeActiveSupportSq n).card * 2 + 1 +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) < L n - C
+
+/--
+Low-fourth-range active-support criterion:
+the very-large active primes (`p^4 > n`) are absorbed into the explicit `2 * (L n + 1) + 1`
+term, leaving only the low-fourth active support and the active Wieferich excess.
+-/
+def G3_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) < L n
+
+/-- Slackened low-fourth-range active-support criterion. -/
+def G3_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (lowFourthPrimeActiveSupportSq n).card * 2 + ((L n + 1) * 2 + 1) +
+      (wieferichLargePrimeActiveSupportSq n).card * (((L n + 1) / 2 + 1) - 2) < L n - C
+
 lemma two_le_z_of_sixteen_le {n : Nat} (hn : 16 <= n) : 2 <= z n := by
   have hn0 : n ≠ 0 := Nat.ne_of_gt (lt_of_lt_of_le (by decide : 0 < 16) hn)
   have hlog4 : 4 <= L n := by
+    unfold L
+    refine (Nat.le_log_iff_pow_le Nat.one_lt_two hn0).2 ?_
+    simpa using hn
+  unfold z
+  omega
+
+lemma three_le_z_of_sixtyfour_le {n : Nat} (hn : 64 <= n) : 3 <= z n := by
+  have hn0 : n ≠ 0 := Nat.ne_of_gt (lt_of_lt_of_le (by decide : 0 < 64) hn)
+  have hlog6 : 6 <= L n := by
     unfold L
     refine (Nat.le_log_iff_pow_le Nat.one_lt_two hn0).2 ?_
     simpa using hn
@@ -4439,6 +8173,158 @@ lemma G3_of_supportSq_bound_eventually_half
   have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
   have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
   exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_half n hz2) (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichSplit
+    (hSupp : G3_supportSq_bound_eventually_wieferichSplit) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_wieferich_split n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichSplit_slack {C : Nat}
+    (hSupp : G3_supportSq_bound_eventually_wieferichSplit_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_wieferich_split n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichThreeSplit
+    (hSupp : G3_supportSq_bound_eventually_wieferichThreeSplit) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_wieferich_three_split n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichThreeSplit_slack {C : Nat}
+    (hSupp : G3_supportSq_bound_eventually_wieferichThreeSplit_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt (G1_large_prime_decomp_sq_localOrder_wieferich_three_split n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichExcess
+    (hSupp : G3_supportSq_bound_eventually_wieferichExcess) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_localOrder_supportSq_three_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_supportSq_bound_eventually_wieferichExcess_slack {C : Nat}
+    (hSupp : G3_supportSq_bound_eventually_wieferichExcess_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_localOrder_supportSq_three_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_activeSupportSq_bound_eventually_wieferichExcess
+    (hSupp : G3_activeSupportSq_bound_eventually_wieferichExcess) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_supportSq_three_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_activeSupportSq_bound_eventually_wieferichExcess_slack {C : Nat}
+    (hSupp : G3_activeSupportSq_bound_eventually_wieferichExcess_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_supportSq_three_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_activeSupportSq_bound_eventually_wieferichExcess_two
+    (hSupp : G3_activeSupportSq_bound_eventually_wieferichExcess_two) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_supportSq_two_add_wieferich_excess_plus_one n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_activeSupportSq_bound_eventually_wieferichExcess_two_slack {C : Nat}
+    (hSupp : G3_activeSupportSq_bound_eventually_wieferichExcess_two_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_supportSq_two_add_wieferich_excess_plus_one n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two
+    (hSupp : G3_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two) :
+    G3_large_prime_error := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_lowFourth_two_add_L_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
+
+lemma G3_of_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two_slack {C : Nat}
+    (hSupp : G3_lowFourthActiveSupportSq_bound_eventually_wieferichExcess_two_slack C) :
+    G3_large_prime_error_slack C := by
+  rcases hSupp with ⟨N, hN⟩
+  refine ⟨max N 16, ?_⟩
+  intro n hn hodd
+  have hnN : N <= n := le_trans (le_max_left N 16) hn
+  have hn16 : 16 <= n := le_trans (le_max_right N 16) hn
+  have hz2 : 2 <= z n := two_le_z_of_sixteen_le hn16
+  exact lt_of_le_of_lt
+    (G1_large_prime_decomp_sq_active_localOrder_lowFourth_two_add_L_add_wieferich_excess n hz2)
+    (hN n hnN hodd)
 
 /-- F1 (slack form): positive survivor count from matched slack assumptions. -/
 lemma F1_positive_survivors_slack {C : Nat}
@@ -5623,6 +9509,81 @@ lemma T0_erdos11_from_density_assumptions {a b d : Nat}
   rcases hN n hn hodd with ⟨k, hkK, hsq⟩
   exact C5 (C1 hkK) hsq
 
+/--
+Clean large-prime contradiction target:
+eventually, the clean set `A n (z n)` is covered by fewer than `L n` clean
+large-prime square classes after collapsing the non-Wieferich part to support
+cardinality and retaining only clean Wieferich excess.
+-/
+def A_cleanSupportSq_bound_eventually_wieferichExcess : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeCleanSupportSq n).card +
+      Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) < L n
+
+/-- Slackened clean large-prime contradiction target. -/
+def A_cleanSupportSq_bound_eventually_wieferichExcess_slack (C : Nat) : Prop :=
+  exists N : Nat, forall n : Nat, N <= n -> Odd n ->
+    (largePrimeCleanSupportSq n).card +
+      Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) <
+        L n - C
+
+/--
+Direct clean contradiction route:
+combine the small-prime sieve lower bound on `A` with the clean large-prime upper
+bound under `¬ Represents`.
+-/
+lemma T0_erdos11_from_clean_support_sq_bound
+    (hS1 : S1_small_prime_sieve)
+    (hClean : A_cleanSupportSq_bound_eventually_wieferichExcess) :
+    Erdos11Conjecture := by
+  rcases hS1 with ⟨N1, hS1'⟩
+  rcases hClean with ⟨N2, hClean'⟩
+  refine ⟨max (max N1 N2) 64, ?_⟩
+  intro n hn hodd
+  have hn12 : max N1 N2 <= n := le_trans (le_max_left (max N1 N2) 64) hn
+  have hn1 : N1 <= n := le_trans (le_max_left N1 N2) hn12
+  have hn2 : N2 <= n := le_trans (le_max_right N1 N2) hn12
+  have hn64 : 64 <= n := le_trans (le_max_right (max N1 N2) 64) hn
+  by_contra hNotRep
+  have hA : L n <= (A n (z n)).card := hS1' n hn1 hodd
+  have hz3 : 3 <= z n := three_le_z_of_sixtyfour_le hn64
+  have hUpper :
+      (A n (z n)).card <=
+        (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+    exact A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_excess_of_not_represents hNotRep hz3
+  have hCleanLt :
+      (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) <
+        L n := hClean' n hn2 hodd
+  exact (Nat.not_lt_of_ge hA) (lt_of_le_of_lt hUpper hCleanLt)
+
+lemma T0_erdos11_from_clean_support_sq_bound_slack {C : Nat}
+    (hS1 : S1_small_prime_sieve_slack C)
+    (hClean : A_cleanSupportSq_bound_eventually_wieferichExcess_slack C) :
+    Erdos11Conjecture := by
+  rcases hS1 with ⟨N1, hS1'⟩
+  rcases hClean with ⟨N2, hClean'⟩
+  refine ⟨max (max N1 N2) 64, ?_⟩
+  intro n hn hodd
+  have hn12 : max N1 N2 <= n := le_trans (le_max_left (max N1 N2) 64) hn
+  have hn1 : N1 <= n := le_trans (le_max_left N1 N2) hn12
+  have hn2 : N2 <= n := le_trans (le_max_right N1 N2) hn12
+  have hn64 : 64 <= n := le_trans (le_max_right (max N1 N2) 64) hn
+  by_contra hNotRep
+  have hA : L n - C <= (A n (z n)).card := hS1' n hn1 hodd
+  have hz3 : 3 <= z n := three_le_z_of_sixtyfour_le hn64
+  have hUpper :
+      (A n (z n)).card <=
+        (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) := by
+    exact A_large_prime_decomp_sq_cleanSupport_card_add_wieferich_excess_of_not_represents hNotRep hz3
+  have hCleanLt :
+      (largePrimeCleanSupportSq n).card +
+          Finset.sum (wieferichLargePrimeCleanSupportSq n) (fun p => cleanNp n (z n) p - 1) <
+        L n - C := hClean' n hn2 hodd
+  exact (Nat.not_lt_of_ge hA) (lt_of_le_of_lt hUpper hCleanLt)
+
 /-- F1: positive survivor count from small and large prime estimates. -/
 lemma F1_positive_survivors (hS1 : S1_small_prime_sieve) (hG3 : G3_large_prime_error) :
     exists N3 : Nat,
@@ -5974,6 +9935,22 @@ Equivalent bridge form phrased directly from `¬Erdos11Conjecture`.
 def CounterexampleBridgeNeg16673316660 : Prop :=
   ¬ Erdos11Conjecture → AsymptoticGraph.MatchedDensityBoundsScaled16673316660
 
+lemma counterexampleBridge16673316660_iff_not_unbounded_odd_counterexamples :
+    CounterexampleBridge16673316660 ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact force_false_target_iff_not_unbounded_odd_counterexamples
+    AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660
+
+lemma counterexampleBridge16673316660_of_erdos11
+    (hE : Erdos11Conjecture) :
+    CounterexampleBridge16673316660 := by
+  exact unbounded_counterexamples_elim_of_erdos11 hE
+
+lemma counterexampleBridgeNeg16673316660_of_erdos11
+    (hE : Erdos11Conjecture) :
+    CounterexampleBridgeNeg16673316660 := by
+  exact not_erdos11_elim_of_erdos11 hE
+
 /--
 Generic split-margin hypothesis:
 both bad components carry a shared positive margin `Δ`, with coefficients summing to `d`.
@@ -5995,6 +9972,19 @@ headroom whose coefficients sum to `16673316660`.
 -/
 def AsymptoticSplitMargin16673316660 : Prop :=
   SplitMargin 16673316660 4305397883 12367918777
+
+/--
+Focused step-1 extraction target:
+unbounded odd counterexamples force the analytic split package.
+-/
+def UnboundedForcesAsymptoticSplitMargin16673316660 : Prop :=
+  (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) →
+    AsymptoticSplitMargin16673316660
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660_of_erdos11
+    (hE : Erdos11Conjecture) :
+    UnboundedForcesAsymptoticSplitMargin16673316660 := by
+  exact unbounded_counterexamples_elim_of_erdos11 hE
 
 lemma matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660
     (hSplit : AsymptoticSplitMargin16673316660) :
@@ -6154,6 +10144,14 @@ lemma not_unbounded_odd_counterexamples_of_split_margin
     exact lt_of_le_of_lt hScaled (lt_of_lt_of_le hStrict hUpper)
   exact (Nat.lt_irrefl _ hlt)
 
+lemma not_splitMargin_of_unbounded_odd_counterexamples
+    {d cSmall cLarge : Nat}
+    (hSum : cSmall + cLarge = d)
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) :
+    ¬ SplitMargin d cSmall cLarge := by
+  intro hSplit
+  exact (not_unbounded_odd_counterexamples_of_split_margin hSum hSplit) hUnbounded
+
 lemma erdos11_of_not_unbounded_odd_counterexamples
     (hNo :
       ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n)) :
@@ -6194,6 +10192,19 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660
     (d := 16673316660) (cSmall := 4305397883) (cLarge := 12367918777)
     (by norm_num) hSplit
 
+lemma not_asymptotic_split_margin16673316660_of_unbounded_odd_counterexamples
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) :
+    ¬ AsymptoticSplitMargin16673316660 := by
+  exact not_splitMargin_of_unbounded_odd_counterexamples
+    (d := 16673316660) (cSmall := 4305397883) (cLarge := 12367918777)
+    (by norm_num) hUnbounded
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660_iff_not_unbounded_odd_counterexamples :
+    UnboundedForcesAsymptoticSplitMargin16673316660 ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact force_false_target_iff_not_unbounded_odd_counterexamples
+    not_AsymptoticSplitMargin16673316660
+
 /--
 Bridge theorem from the analytic split package.
 -/
@@ -6203,6 +10214,30 @@ lemma counterexampleBridge16673316660_of_asymptotic_split_margin16673316660
   intro hUnbounded
   exact False.elim
     ((not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660 hSplit) hUnbounded)
+
+lemma counterexampleBridge16673316660_of_unbounded_forces_asymptotic_split_margin16673316660
+    (hStep1 : UnboundedForcesAsymptoticSplitMargin16673316660) :
+    CounterexampleBridge16673316660 := by
+  intro hUnbounded
+  exact matchedDensityBoundsScaled16673316660_of_asymptotic_split_margin16673316660
+    (hStep1 hUnbounded)
+
+lemma erdos11_of_unbounded_forces_asymptotic_split_margin16673316660
+    (hStep1 : UnboundedForcesAsymptoticSplitMargin16673316660) :
+    Erdos11Conjecture := by
+  exact erdos11_of_unbounded_counterexample_bridge16673316660
+    (counterexampleBridge16673316660_of_unbounded_forces_asymptotic_split_margin16673316660 hStep1)
+
+lemma counterexampleBridge16673316660_iff_unboundedForcesAsymptoticSplitMargin16673316660 :
+    CounterexampleBridge16673316660 ↔
+      UnboundedForcesAsymptoticSplitMargin16673316660 := by
+  exact force_false_targets_iff
+    AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660
+    not_AsymptoticSplitMargin16673316660
+
+lemma erdos11_iff_unboundedForcesAsymptoticSplitMargin16673316660 :
+    Erdos11Conjecture ↔ UnboundedForcesAsymptoticSplitMargin16673316660 := by
+  exact (force_false_target_iff_erdos11 not_AsymptoticSplitMargin16673316660).symm
 
 /--
 Unconditional closure from the analytic split package.
@@ -6220,6 +10255,10 @@ This keeps the same total `16673316660` while avoiding the exact threshold lock.
 def AsymptoticSplitMargin16673316660Safe : Prop :=
   SplitMargin 16673316660 4305397884 12367918776
 
+def UnboundedForcesAsymptoticSplitMargin16673316660Safe : Prop :=
+  (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) →
+    AsymptoticSplitMargin16673316660Safe
+
 lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Safe
     (hSplit : AsymptoticSplitMargin16673316660Safe) :
     ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
@@ -6227,10 +10266,279 @@ lemma not_unbounded_odd_counterexamples_of_asymptotic_split_margin16673316660Saf
     (d := 16673316660) (cSmall := 4305397884) (cLarge := 12367918776)
     (by norm_num) hSplit
 
+lemma not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) :
+    ¬ AsymptoticSplitMargin16673316660Safe := by
+  exact not_splitMargin_of_unbounded_odd_counterexamples
+    (d := 16673316660) (cSmall := 4305397884) (cLarge := 12367918776)
+    (by norm_num) hUnbounded
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660Safe_of_erdos11
+    (hE : Erdos11Conjecture) :
+    UnboundedForcesAsymptoticSplitMargin16673316660Safe := by
+  exact unbounded_counterexamples_elim_of_erdos11 hE
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660Safe_iff_not_unbounded_odd_counterexamples :
+    UnboundedForcesAsymptoticSplitMargin16673316660Safe ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact force_target_iff_not_unbounded_odd_counterexamples_of_not_target_of_unbounded
+    not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+
+lemma erdos11_of_unbounded_forces_asymptotic_split_margin16673316660Safe
+    (hStep1 : UnboundedForcesAsymptoticSplitMargin16673316660Safe) :
+    Erdos11Conjecture := by
+  exact (force_target_iff_erdos11_of_not_target_of_unbounded
+    not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples).mp hStep1
+
+lemma erdos11_iff_unboundedForcesAsymptoticSplitMargin16673316660Safe :
+    Erdos11Conjecture ↔ UnboundedForcesAsymptoticSplitMargin16673316660Safe := by
+  exact (force_target_iff_erdos11_of_not_target_of_unbounded
+    not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples).symm
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660_iff_safe :
+    UnboundedForcesAsymptoticSplitMargin16673316660 ↔
+      UnboundedForcesAsymptoticSplitMargin16673316660Safe := by
+  exact force_targets_iff_of_not_targets_of_unbounded
+    not_asymptotic_split_margin16673316660_of_unbounded_odd_counterexamples
+    not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+
+lemma counterexampleBridge16673316660_iff_unboundedForcesAsymptoticSplitMargin16673316660Safe :
+    CounterexampleBridge16673316660 ↔
+      UnboundedForcesAsymptoticSplitMargin16673316660Safe := by
+  rw [counterexampleBridge16673316660_iff_unboundedForcesAsymptoticSplitMargin16673316660,
+    unboundedForcesAsymptoticSplitMargin16673316660_iff_safe]
+
 lemma erdos11_of_asymptotic_split_margin16673316660Safe
     (hSplit : AsymptoticSplitMargin16673316660Safe) :
     Erdos11Conjecture := by
   exact erdos11_of_split_margin (d := 16673316660) (cSmall := 4305397884) (cLarge := 12367918776)
+    (by norm_num) hSplit
+
+/--
+Clean split-margin target:
+the small-prime bad set and the clean large-prime mass both carry a shared
+positive margin, with coefficients summing to `d`.
+-/
+def CleanSplitMargin (d cSmall cClean : Nat) : Prop :=
+  ∃ Δ N0 : Nat, 0 < Δ ∧
+    ∀ n : Nat, N0 ≤ n → Odd n →
+      d * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        cSmall * AsymptoticGraph.L n ∧
+      d * AsymptoticGraph.cleanLargePrimeMass n +
+          Δ * AsymptoticGraph.L n <=
+        cClean * AsymptoticGraph.L n
+
+lemma not_unbounded_odd_counterexamples_of_clean_split_margin
+    {d cSmall cClean : Nat}
+    (hSum : cSmall + cClean = d)
+    (hSplit : CleanSplitMargin d cSmall cClean) :
+    ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  intro hUnbounded
+  rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
+  let N : Nat := max N0 64
+  rcases hUnbounded N with ⟨n, hnN, hodd, hNotRep⟩
+  let S : Nat := (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card
+  let C0 : Nat := AsymptoticGraph.cleanLargePrimeMass n
+  let Kc : Nat := (AsymptoticGraph.K n).card
+  let Ln : Nat := AsymptoticGraph.L n
+  have hn0 : 0 < n := hodd.pos
+  have h64 : 64 ≤ n := le_trans (le_max_right N0 64) hnN
+  have hz3 : 3 <= AsymptoticGraph.z n := AsymptoticGraph.three_le_z_of_sixtyfour_le h64
+  have hLpos : 0 < Ln := by
+    unfold Ln AsymptoticGraph.L
+    have h2n : 2 <= n := by omega
+    exact Nat.log_pos Nat.one_lt_two h2n
+  have hN0 : N0 ≤ n := le_trans (le_max_left N0 64) hnN
+  rcases hSplitN n hN0 hodd with ⟨hSmallRaw, hCleanRaw⟩
+  have hSmall : d * S + Δ * Ln <= cSmall * Ln := by
+    simpa [S, Ln] using hSmallRaw
+  have hClean : d * C0 + Δ * Ln <= cClean * Ln := by
+    simpa [C0, Ln] using hCleanRaw
+  have hK_le_SC : Kc <= S + C0 := by
+    simpa [S, C0, Kc] using
+      (AsymptoticGraph.card_K_le_smallPrimeBad_add_cleanLargePrimeMass_of_not_represents
+        (n := n) hNotRep hz3)
+  have hL_le_K : Ln <= Kc := by
+    simpa [Ln, Kc] using AsymptoticGraph.L_le_card_K_of_pos hn0
+  have hL_le_SC : Ln <= S + C0 := le_trans hL_le_K hK_le_SC
+  have hScaled : d * Ln <= d * (S + C0) := Nat.mul_le_mul_left d hL_le_SC
+  have hUpper :
+      d * (S + C0) + (Δ * Ln + Δ * Ln) <= d * Ln := by
+    have hLeft :
+        (d * S + Δ * Ln) + (d * C0 + Δ * Ln) =
+          d * (S + C0) + (Δ * Ln + Δ * Ln) := by
+      calc
+        (d * S + Δ * Ln) + (d * C0 + Δ * Ln) =
+            (d * S + d * C0) + (Δ * Ln + Δ * Ln) := by ac_rfl
+        _ = d * (S + C0) + (Δ * Ln + Δ * Ln) := by
+            rw [← Nat.mul_add]
+    have hRight : cSmall * Ln + cClean * Ln = d * Ln := by
+      calc
+        cSmall * Ln + cClean * Ln = (cSmall + cClean) * Ln := by
+          rw [Nat.add_mul]
+        _ = d * Ln := by simpa [hSum]
+    calc
+      d * (S + C0) + (Δ * Ln + Δ * Ln) =
+          (d * S + Δ * Ln) + (d * C0 + Δ * Ln) := by
+            symm
+            exact hLeft
+      _ <= cSmall * Ln + cClean * Ln := Nat.add_le_add hSmall hClean
+      _ = d * Ln := hRight
+  have hStrict :
+      d * (S + C0) <
+        d * (S + C0) + (Δ * Ln + Δ * Ln) := by
+    have hPos : 0 < Δ * Ln + Δ * Ln := by
+      have hDeltaLnPos : 0 < Δ * Ln := Nat.mul_pos hΔ hLpos
+      omega
+    exact Nat.lt_add_of_pos_right hPos
+  have hlt : d * Ln < d * Ln := by
+    exact lt_of_le_of_lt hScaled (lt_of_lt_of_le hStrict hUpper)
+  exact (Nat.lt_irrefl _ hlt)
+
+lemma not_cleanSplitMargin_of_unbounded_odd_counterexamples
+    {d cSmall cClean : Nat}
+    (hSum : cSmall + cClean = d)
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) :
+    ¬ CleanSplitMargin d cSmall cClean := by
+  intro hSplit
+  exact (not_unbounded_odd_counterexamples_of_clean_split_margin hSum hSplit) hUnbounded
+
+lemma erdos11_of_clean_split_margin
+    {d cSmall cClean : Nat}
+    (hSum : cSmall + cClean = d)
+    (hSplit : CleanSplitMargin d cSmall cClean) :
+    Erdos11Conjecture := by
+  exact erdos11_of_not_unbounded_odd_counterexamples
+    (not_unbounded_odd_counterexamples_of_clean_split_margin hSum hSplit)
+
+/--
+Log-prime refinement of the clean split target:
+the clean large-prime side is replaced by clean support plus the prime-weighted
+clean Wieferich sum.
+-/
+def CleanLogPrimeSplitMargin (d cSmall cClean : Nat) : Prop :=
+  ∃ Δ N0 : Nat, 0 < Δ ∧
+    ∀ n : Nat, N0 ≤ n → Odd n →
+      d * (AsymptoticGraph.smallPrimeBad n (AsymptoticGraph.z n)).card +
+          Δ * AsymptoticGraph.L n <=
+        cSmall * AsymptoticGraph.L n ∧
+      d * ((AsymptoticGraph.largePrimeCleanSupportSq n).card +
+            Finset.sum (AsymptoticGraph.wieferichLargePrimeCleanSupportSq n)
+              (fun p => (AsymptoticGraph.L n + 1) / (2 * Nat.log 2 p))) +
+          Δ * AsymptoticGraph.L n <=
+        cClean * AsymptoticGraph.L n
+
+lemma cleanSplitMargin_of_cleanLogPrimeSplitMargin
+    {d cSmall cClean : Nat}
+    (hSplit : CleanLogPrimeSplitMargin d cSmall cClean) :
+    CleanSplitMargin d cSmall cClean := by
+  rcases hSplit with ⟨Δ, N0, hΔ, hSplitN⟩
+  refine ⟨Δ, max N0 64, hΔ, ?_⟩
+  intro n hn hodd
+  have hN0 : N0 <= n := le_trans (le_max_left N0 64) hn
+  have h64 : 64 <= n := le_trans (le_max_right N0 64) hn
+  have hz3 : 3 <= AsymptoticGraph.z n := AsymptoticGraph.three_le_z_of_sixtyfour_le h64
+  rcases hSplitN n hN0 hodd with ⟨hSmall, hLarge⟩
+  refine ⟨hSmall, ?_⟩
+  have hMass :
+      d * AsymptoticGraph.cleanLargePrimeMass n <=
+        d * ((AsymptoticGraph.largePrimeCleanSupportSq n).card +
+          Finset.sum (AsymptoticGraph.wieferichLargePrimeCleanSupportSq n)
+            (fun p => (AsymptoticGraph.L n + 1) / (2 * Nat.log 2 p))) := by
+    exact Nat.mul_le_mul_left d
+      (AsymptoticGraph.cleanLargePrimeMass_le_card_add_wieferich_logPrime_excess n hz3)
+  have hMassAdd :
+      d * AsymptoticGraph.cleanLargePrimeMass n + Δ * AsymptoticGraph.L n <=
+        d * ((AsymptoticGraph.largePrimeCleanSupportSq n).card +
+          Finset.sum (AsymptoticGraph.wieferichLargePrimeCleanSupportSq n)
+            (fun p => (AsymptoticGraph.L n + 1) / (2 * Nat.log 2 p))) +
+          Δ * AsymptoticGraph.L n := by
+    exact Nat.add_le_add_right hMass (Δ * AsymptoticGraph.L n)
+  exact le_trans hMassAdd hLarge
+
+lemma erdos11_of_cleanLogPrime_split_margin
+    {d cSmall cClean : Nat}
+    (hSum : cSmall + cClean = d)
+    (hSplit : CleanLogPrimeSplitMargin d cSmall cClean) :
+    Erdos11Conjecture := by
+  exact erdos11_of_clean_split_margin hSum
+    (cleanSplitMargin_of_cleanLogPrimeSplitMargin hSplit)
+
+/--
+Clean safe split package:
+the small-prime side keeps the safe coefficient `4305397884`, while the
+large-prime side uses the clean large-prime mass with coefficient `12367918776`.
+-/
+def AsymptoticCleanSplitMargin16673316660Safe : Prop :=
+  CleanSplitMargin 16673316660 4305397884 12367918776
+
+/--
+Sharper safe clean split package:
+the large-prime side is stated directly with clean support plus the
+log-weighted clean Wieferich sum.
+-/
+def AsymptoticCleanLogPrimeSplitMargin16673316660Safe : Prop :=
+  CleanLogPrimeSplitMargin 16673316660 4305397884 12367918776
+
+def UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe : Prop :=
+  (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) →
+    AsymptoticCleanSplitMargin16673316660Safe
+
+lemma not_asymptotic_clean_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+    (hUnbounded : ∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) :
+    ¬ AsymptoticCleanSplitMargin16673316660Safe := by
+  exact not_cleanSplitMargin_of_unbounded_odd_counterexamples
+    (d := 16673316660) (cSmall := 4305397884) (cClean := 12367918776)
+    (by norm_num) hUnbounded
+
+lemma unboundedForcesAsymptoticCleanSplitMargin16673316660Safe_of_erdos11
+    (hE : Erdos11Conjecture) :
+    UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe := by
+  exact unbounded_counterexamples_elim_of_erdos11 hE
+
+lemma unboundedForcesAsymptoticCleanSplitMargin16673316660Safe_iff_not_unbounded_odd_counterexamples :
+    UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe ↔
+      ¬ (∀ N : Nat, ∃ n : Nat, N ≤ n ∧ Odd n ∧ ¬ Represents n) := by
+  exact force_target_iff_not_unbounded_odd_counterexamples_of_not_target_of_unbounded
+    not_asymptotic_clean_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+
+lemma erdos11_of_unbounded_forces_asymptotic_clean_split_margin16673316660Safe
+    (hStep1 : UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe) :
+    Erdos11Conjecture := by
+  exact (force_target_iff_erdos11_of_not_target_of_unbounded
+    not_asymptotic_clean_split_margin16673316660Safe_of_unbounded_odd_counterexamples).mp hStep1
+
+lemma erdos11_iff_unboundedForcesAsymptoticCleanSplitMargin16673316660Safe :
+    Erdos11Conjecture ↔ UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe := by
+  exact (force_target_iff_erdos11_of_not_target_of_unbounded
+    not_asymptotic_clean_split_margin16673316660Safe_of_unbounded_odd_counterexamples).symm
+
+lemma unboundedForcesAsymptoticSplitMargin16673316660Safe_iff_clean :
+    UnboundedForcesAsymptoticSplitMargin16673316660Safe ↔
+      UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe := by
+  exact force_targets_iff_of_not_targets_of_unbounded
+    not_asymptotic_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+    not_asymptotic_clean_split_margin16673316660Safe_of_unbounded_odd_counterexamples
+
+lemma counterexampleBridge16673316660_iff_unboundedForcesAsymptoticCleanSplitMargin16673316660Safe :
+    CounterexampleBridge16673316660 ↔
+      UnboundedForcesAsymptoticCleanSplitMargin16673316660Safe := by
+  rw [counterexampleBridge16673316660_iff_unboundedForcesAsymptoticSplitMargin16673316660Safe,
+    unboundedForcesAsymptoticSplitMargin16673316660Safe_iff_clean]
+
+lemma erdos11_of_asymptotic_clean_split_margin16673316660Safe
+    (hSplit : AsymptoticCleanSplitMargin16673316660Safe) :
+    Erdos11Conjecture := by
+  exact erdos11_of_clean_split_margin
+    (d := 16673316660) (cSmall := 4305397884) (cClean := 12367918776)
+    (by norm_num) hSplit
+
+lemma erdos11_of_asymptotic_cleanLogPrime_split_margin16673316660Safe
+    (hSplit : AsymptoticCleanLogPrimeSplitMargin16673316660Safe) :
+    Erdos11Conjecture := by
+  exact erdos11_of_cleanLogPrime_split_margin
+    (d := 16673316660) (cSmall := 4305397884) (cClean := 12367918776)
     (by norm_num) hSplit
 
 lemma counterexampleBridgeNeg16673316660_iff :
@@ -6243,20 +10551,41 @@ lemma counterexampleBridgeNeg16673316660_iff :
 
 lemma erdos11_iff_counterexampleBridgeNeg16673316660 :
     Erdos11Conjecture ↔ CounterexampleBridgeNeg16673316660 := by
-  constructor
-  · intro hE hNot
-    exact False.elim (hNot hE)
-  · intro hBridge
-    exact erdos11_of_counterexample_bridge16673316660 hBridge
+  exact (neg_force_false_target_iff_erdos11
+    AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660).symm
 
 lemma erdos11_iff_counterexampleBridge16673316660 :
     Erdos11Conjecture ↔ CounterexampleBridge16673316660 := by
-  constructor
-  · intro hE hUnbounded
-    have hNot : ¬ Erdos11Conjecture :=
-      not_Erdos11Conjecture_iff_unbounded_odd_counterexamples.mpr hUnbounded
-    exact False.elim (hNot hE)
-  · intro hBridge
-    exact erdos11_of_unbounded_counterexample_bridge16673316660 hBridge
+  exact (force_false_target_iff_erdos11
+    AsymptoticGraph.not_MatchedDensityBoundsScaled16673316660).symm
+
+/--
+Unconditional conjecture in direct arithmetic language:
+every sufficiently large odd integer is the sum of a positive squarefree
+number and a power of `2`.
+-/
+def LargeOddSquarefreePlusPowerOfTwoConjecture : Prop :=
+  ∃ N : Nat, ∀ n : Nat, N ≤ n → Odd n →
+    ∃ m k : Nat, m > 0 ∧ Squarefree m ∧ n = m + 2 ^ k
+
+lemma largeOddSquarefreePlusPowerOfTwoConjecture_iff_erdos11 :
+    LargeOddSquarefreePlusPowerOfTwoConjecture ↔ Erdos11Conjecture := by
+  rfl
+
+lemma erdos11_iff_largeOddSquarefreePlusPowerOfTwoConjecture :
+    Erdos11Conjecture ↔ LargeOddSquarefreePlusPowerOfTwoConjecture := by
+  exact largeOddSquarefreePlusPowerOfTwoConjecture_iff_erdos11.symm
+
+/--
+Question form:
+is every sufficiently large odd integer the sum of a positive squarefree
+number and a power of `2`?
+-/
+def EveryLargeOddIsSquarefreePlusPowerOfTwo : Prop :=
+  LargeOddSquarefreePlusPowerOfTwoConjecture
+
+theorem everyLargeOddIsSquarefreePlusPowerOfTwo_iff_erdos11 :
+    EveryLargeOddIsSquarefreePlusPowerOfTwo ↔ Erdos11Conjecture := by
+  exact largeOddSquarefreePlusPowerOfTwoConjecture_iff_erdos11
 
 end Erdos11
